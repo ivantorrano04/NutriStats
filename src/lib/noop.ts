@@ -150,6 +150,12 @@ export const Buffer = proxy;
 export const runInContext = proxy;
 export const createContext = proxy;
 
+// perf_hooks
+export const performance = proxy;
+
+// async_hooks
+export const AsyncLocalStorage = proxy;
+
 // process (para desestructuraciones si se usa como alias)
 export const nextTick = (fn: Function) => setTimeout(fn, 0);
 export const env = {};
