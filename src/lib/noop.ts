@@ -1,72 +1,49 @@
 
 /**
  * @fileOverview Un módulo de sustitución (shim) universal para Node.js.
- * Exporta implementaciones vacías o mínimas de módulos de servidor para el navegador.
+ * Diseñado para actuar como objeto, función y constructor simultáneamente.
  */
 
-// Utilidades de codificación
-export class TextEncoder {
-  encode() { return new Uint8Array(); }
-}
+// Un emisor de eventos que puede ser instanciado
+function NoopEmitter() {}
+NoopEmitter.prototype.on = function() { return this; };
+NoopEmitter.prototype.off = function() { return this; };
+NoopEmitter.prototype.once = function() { return this; };
+NoopEmitter.prototype.emit = function() { return false; };
+NoopEmitter.prototype.removeAllListeners = function() { return this; };
+NoopEmitter.prototype.setMaxListeners = function() { return this; };
+NoopEmitter.prototype.listeners = function() { return []; };
 
-export class TextDecoder {
-  decode() { return ''; }
-}
+// Clases base para streams
+function NoopStream() { NoopEmitter.call(this); }
+NoopStream.prototype = Object.create(NoopEmitter.prototype);
 
-// Emisor de eventos básico
-export class EventEmitter {
-  static EventEmitter = EventEmitter;
-  on() { return this; }
-  off() { return this; }
-  once() { return this; }
-  emit() { return false; }
-  removeAllListeners() { return this; }
-  addListener() { return this; }
-  removeListener() { return this; }
-  setMaxListeners() { return this; }
-  getMaxListeners() { return 10; }
-  listeners() { return []; }
-  rawListeners() { return []; }
-  listenerCount() { return 0; }
-  prependListener() { return this; }
-  prependOnceListener() { return this; }
-  eventNames() { return []; }
-}
+function Readable() { NoopStream.call(this); }
+Readable.prototype = Object.create(NoopStream.prototype);
+Readable.prototype.pipe = function(dest: any) { return dest; };
+Readable.prototype.read = function() { return null; };
+Readable.from = function() { return new Readable(); };
 
-// Mocks de Streams
-export class Stream extends EventEmitter {
-  static Stream = Stream;
-}
+function Writable() { NoopStream.call(this); }
+Writable.prototype = Object.create(NoopStream.prototype);
+Writable.prototype.write = function() { return true; };
+Writable.prototype.end = function() {};
 
-export class Readable extends Stream {
-  static Readable = Readable;
-  _read() {}
-  push() { return true; }
-  pipe(dest: any) { return dest; }
-  unpipe() { return this; }
-  unshift() {}
-  wrap() { return this; }
-  setEncoding() { return this; }
-  pause() { return this; }
-  resume() { return this; }
-  isPaused() { return false; }
-}
+// Exportaciones de Util
+export const inspect = (obj: any) => (typeof obj === 'string' ? obj : JSON.stringify(obj));
+export const inherits = (ctor: any, superCtor: any) => {
+  if (superCtor) {
+    ctor.super_ = superCtor;
+    Object.setPrototypeOf(ctor.prototype, superCtor.prototype);
+  }
+};
+export const promisify = (fn: any) => {
+  const p: any = (...args: any[]) => fn(...args);
+  p.custom = Symbol('util.promisify.custom');
+  return p;
+};
 
-export class Writable extends Stream {
-  static Writable = Writable;
-  _write() {}
-  end() {}
-  write() { return true; }
-  setDefaultEncoding() { return this; }
-  cork() {}
-  uncork() {}
-}
-
-export class Duplex extends Readable {
-  static Duplex = Duplex;
-}
-
-// Utilidades de Path (Navegador)
+// Exportaciones de Path
 export const join = (...args: any[]) => args.filter(Boolean).join('/');
 export const resolve = (...args: any[]) => args.filter(Boolean).join('/');
 export const dirname = (p: string) => p.split('/').slice(0, -1).join('/') || '.';
@@ -76,38 +53,17 @@ export const extname = (p: string) => {
   const i = b.lastIndexOf('.');
   return i <= 0 ? '' : b.substring(i);
 };
-export const parse = (p: string) => ({ 
-  root: '', 
-  dir: dirname(p), 
-  base: basename(p), 
-  ext: extname(p), 
-  name: basename(p).split('.')[0] 
-});
 export const sep = '/';
 
-// Utilidades de Node.js (util)
-export const inherits = (ctor: any, superCtor: any) => {
-  if (superCtor) {
-    ctor.super_ = superCtor;
-    Object.setPrototypeOf(ctor.prototype, superCtor.prototype);
-  }
-};
+// Clases de Codificación (Soporte estático para Turbopack)
+export class TextEncoder {
+  encode() { return new Uint8Array(); }
+}
+export class TextDecoder {
+  decode() { return ''; }
+}
 
-export const promisify = (fn: any) => {
-  const p: any = (...args: any[]) => fn(...args);
-  p.custom = Symbol('util.promisify.custom');
-  return p;
-};
-
-export const debuglog = () => () => {};
-export const inspect = (obj: any) => typeof obj === 'string' ? obj : JSON.stringify(obj);
-export const format = (str: string, ..._args: any[]) => str;
-
-// Crypto & File System
-export const randomBytes = (size: number) => new Uint8Array(size);
-export const createHash = () => ({ update: () => ({ digest: () => '' }) });
-export const createHmac = () => ({ update: () => ({ digest: () => '' }) });
-
+// File System Promises
 export const promises = {
   readFile: async () => '',
   writeFile: async () => {},
@@ -115,26 +71,33 @@ export const promises = {
   mkdir: async () => {},
   readdir: async () => [],
   stat: async () => ({ isDirectory: () => false, size: 0 }),
-  lstat: async () => ({ isDirectory: () => false, size: 0 }),
   unlink: async () => {},
 };
 
+// Exportación por defecto
+const noopProxy = new Proxy(() => {}, {
+  get: (target, prop) => {
+    if (prop === 'EventEmitter') return NoopEmitter;
+    if (prop === 'Stream') return NoopStream;
+    if (prop === 'Readable') return Readable;
+    if (prop === 'Writable') return Writable;
+    if (prop === 'promises') return promises;
+    if (prop === 'TextEncoder') return TextEncoder;
+    if (prop === 'TextDecoder') return TextDecoder;
+    if (prop === 'join') return join;
+    if (prop === 'resolve') return resolve;
+    // Retornar la función noop para cualquier otro método
+    return target;
+  },
+  apply: (target) => target,
+  construct: () => ({})
+});
+
+export default noopProxy;
+
+// Exportaciones nombradas adicionales para compatibilidad con CommonJS
+export { NoopEmitter as EventEmitter, NoopStream as Stream, Readable, Writable };
 export const readFileSync = () => '';
 export const writeFileSync = () => {};
 export const existsSync = () => false;
-
-// Exportación por defecto para compatibilidad total
-const noop = {
-  join, resolve, dirname, basename, extname, parse, sep,
-  inherits, promisify, debuglog, inspect, format,
-  randomBytes, createHash, createHmac,
-  promises, readFileSync, writeFileSync, existsSync,
-  TextEncoder, TextDecoder, EventEmitter, Stream, Readable, Writable,
-  createSocket: () => ({ on: () => {}, send: () => {}, close: () => {}, bind: () => {} }),
-  AsyncLocalStorage: class { getStore() { return undefined; } run(_: any, callback: any) { return callback(); } },
-  platform: () => 'browser',
-  arch: () => 'x64',
-  performance: typeof window !== 'undefined' ? window.performance : { now: () => Date.now() },
-};
-
-export default noop;
+export const createSocket = () => ({ on: () => {}, send: () => {}, close: () => {}, bind: () => {} });
