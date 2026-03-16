@@ -1,11 +1,17 @@
 /**
  * @fileOverview Un módulo de sustitución (shim) exhaustivo y universal para Node.js.
- * Diseñado para satisfacer tanto requisitos basados en objetos (fs, path) como
- * basados en clases (events, stream), permitiendo la compilación de librerías de servidor
- * en entornos de navegador y exportaciones estáticas.
+ * Diseñado para satisfacer los requisitos de exportación estática de Next.js 15 + Turbopack.
  */
 
-// 1. Definición de clases base que las librerías suelen extender
+// 1. Clases base y mocks para codificación (requeridos por Firebase/util)
+export class TextEncoder {
+  encode() { return new Uint8Array(); }
+}
+
+export class TextDecoder {
+  decode() { return ''; }
+}
+
 export class EventEmitter {
   static EventEmitter = EventEmitter;
   on() { return this; }
@@ -94,6 +100,7 @@ export const promisify = (fn: any) => {
   p.custom = Symbol('util.promisify.custom');
   return p;
 };
+
 export const debuglog = () => () => {};
 export const inspect = (obj: any) => typeof obj === 'string' ? obj : JSON.stringify(obj);
 export const format = (str: string, ...args: any[]) => str;
@@ -102,27 +109,19 @@ export const randomBytes = (size: number) => new Uint8Array(size);
 export const createHash = () => ({ update: () => ({ digest: () => '' }) });
 export const createHmac = () => ({ update: () => ({ digest: () => '' }) });
 
-// 3. El Shim Universal (Función + Objeto)
-// Se usa una función nombrada para actuar como constructor (para 'events')
-// y se le asignan propiedades para actuar como objeto (para 'fs' o 'path').
+// 3. Shim Universal (Función + Objeto)
 function UniversalNoopShim(this: any) {
   return this;
 }
 
-// Hacer que el shim herede de EventEmitter por defecto (común en módulos de Node)
 inherits(UniversalNoopShim, EventEmitter);
 
-// Asignar todas las exportaciones al objeto de la función
 Object.assign(UniversalNoopShim, {
-  // Clases
   EventEmitter, Stream, Readable, Writable, Duplex, Transform,
-  // Path
+  TextEncoder, TextDecoder,
   join, resolve, dirname, basename, extname, parse, sep,
-  // Utils
   inherits, promisify, debuglog, inspect, format,
-  // Crypto
   randomBytes, createHash, createHmac,
-  // FS stubs
   readFileSync: () => '',
   writeFileSync: () => {},
   existsSync: () => false,
@@ -131,19 +130,15 @@ Object.assign(UniversalNoopShim, {
     readFile: async () => '',
     writeFile: async () => {},
   },
-  // OS stubs
   platform: () => 'browser',
   arch: () => 'x64',
   release: () => '',
   type: () => '',
-  // Performance
   performance: typeof window !== 'undefined' ? window.performance : { now: () => Date.now() },
-  // AsyncLocalStorage
   AsyncLocalStorage: class {
     getStore() { return undefined; }
     run(store: any, callback: any) { return callback(); }
   },
-  // Dgram stubs
   createSocket: () => ({
     on: () => {},
     send: () => {},
