@@ -1,4 +1,3 @@
-
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
@@ -37,8 +36,9 @@ const nextConfig: NextConfig = {
     turbo: {
       resolveAlias: {
         /**
-         * En Next.js 15 + Turbopack, no se puede usar 'false' directamente como en Webpack.
-         * Mapeamos los módulos de Node.js a un archivo real vacío para evitar errores de resolución.
+         * En Next.js 15 + Turbopack, mapeamos los módulos de Node.js a un archivo real.
+         * Esto soluciona los errores de 'Module not found' y 'Class extends undefined'
+         * proporcionando un shim que actúa como constructor y objeto.
          */
         'fs': './src/lib/noop.ts',
         'net': './src/lib/noop.ts',
@@ -56,34 +56,28 @@ const nextConfig: NextConfig = {
         'https': './src/lib/noop.ts',
         'zlib': './src/lib/noop.ts',
         'readline': './src/lib/noop.ts',
+        'events': './src/lib/noop.ts',
+        'util': './src/lib/noop.ts',
+        'buffer': './src/lib/noop.ts',
+        'vm': './src/lib/noop.ts',
       },
     },
   },
   webpack: (config, { isServer }) => {
     if (!isServer) {
       /**
-       * Configuración para Webpack (usado en next build fuera de turbo).
-       * Aquí 'false' sí indica que el módulo debe ser ignorado.
+       * Configuración para Webpack (usado en next build).
+       * Redirigimos los módulos de Node.js al mismo shim para consistencia.
        */
-      config.resolve.fallback = {
-        ...config.resolve.fallback,
-        async_hooks: false,
-        fs: false,
-        net: false,
-        tls: false,
-        child_process: false,
-        perf_hooks: false,
-        dns: false,
-        http2: false,
-        path: false,
-        os: false,
-        crypto: false,
-        stream: false,
-        http: false,
-        https: false,
-        zlib: false,
-        readline: false,
-      };
+      const nodeModules = [
+        'fs', 'net', 'tls', 'child_process', 'perf_hooks', 'async_hooks', 
+        'dns', 'http2', 'path', 'os', 'crypto', 'stream', 'http', 'https', 
+        'zlib', 'readline', 'events', 'util', 'buffer', 'vm'
+      ];
+      
+      nodeModules.forEach(mod => {
+        config.resolve.alias[mod] = './src/lib/noop.ts';
+      });
     }
     return config;
   },
