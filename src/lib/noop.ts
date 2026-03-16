@@ -125,6 +125,7 @@ export const freemem = () => 0;
 export const networkInterfaces = () => ({});
 export const release = () => '';
 export const type = () => 'browser';
+export const userInfo = proxy;
 
 // dgram
 export const createSocket = proxy;
