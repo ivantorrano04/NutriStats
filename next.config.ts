@@ -60,6 +60,7 @@ const nextConfig: NextConfig = {
         'util': './src/lib/noop.ts',
         'buffer': './src/lib/noop.ts',
         'vm': './src/lib/noop.ts',
+        'dgram': './src/lib/noop.ts',
       },
     },
   },
@@ -72,7 +73,7 @@ const nextConfig: NextConfig = {
       const nodeModules = [
         'fs', 'net', 'tls', 'child_process', 'perf_hooks', 'async_hooks', 
         'dns', 'http2', 'path', 'os', 'crypto', 'stream', 'http', 'https', 
-        'zlib', 'readline', 'events', 'util', 'buffer', 'vm'
+        'zlib', 'readline', 'events', 'util', 'buffer', 'vm', 'dgram'
       ];
       
       nodeModules.forEach(mod => {

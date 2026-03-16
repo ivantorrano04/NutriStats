@@ -143,6 +143,13 @@ Object.assign(UniversalNoopShim, {
     getStore() { return undefined; }
     run(store: any, callback: any) { return callback(); }
   },
+  // Dgram stubs
+  createSocket: () => ({
+    on: () => {},
+    send: () => {},
+    close: () => {},
+    bind: () => {},
+  }),
 });
 
 export default UniversalNoopShim;
