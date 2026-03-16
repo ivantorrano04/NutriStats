@@ -1,7 +1,13 @@
+
 import type {NextConfig} from 'next';
 import path from 'path';
 
-const noopPath = path.resolve(__dirname, 'src/lib/noop.ts');
+/**
+ * Configuración de Next.js optimizada para exportación estática (Capacitor/Mobile).
+ * Maneja la sustitución de módulos de Node.js para el entorno del navegador.
+ */
+
+const absoluteNoopPath = path.resolve(process.cwd(), 'src/lib/noop.ts');
 
 const nextConfig: NextConfig = {
   output: 'export',
@@ -38,33 +44,37 @@ const nextConfig: NextConfig = {
   experimental: {
     turbo: {
       resolveAlias: {
-        'fs': noopPath,
-        'fs/promises': noopPath,
-        'net': noopPath,
-        'tls': noopPath,
-        'child_process': noopPath,
-        'perf_hooks': noopPath,
-        'async_hooks': noopPath,
-        'dns': noopPath,
-        'http2': noopPath,
-        'path': noopPath,
-        'os': noopPath,
-        'crypto': noopPath,
-        'stream': noopPath,
-        'http': noopPath,
-        'https': noopPath,
-        'zlib': noopPath,
-        'readline': noopPath,
-        'events': noopPath,
-        'util': noopPath,
-        'buffer': noopPath,
-        'vm': noopPath,
-        'dgram': noopPath,
+        // Alias para Turbopack (Entorno de desarrollo)
+        // Solo añadimos los módulos que causan errores en el navegador.
+        // Evitamos alias de 'path' o 'fs' de forma global aquí si es posible,
+        // pero para Capacitor son necesarios en el bundle final.
+        'fs': absoluteNoopPath,
+        'fs/promises': absoluteNoopPath,
+        'net': absoluteNoopPath,
+        'tls': absoluteNoopPath,
+        'child_process': absoluteNoopPath,
+        'perf_hooks': absoluteNoopPath,
+        'async_hooks': absoluteNoopPath,
+        'dns': absoluteNoopPath,
+        'http2': absoluteNoopPath,
+        'os': absoluteNoopPath,
+        'crypto': absoluteNoopPath,
+        'stream': absoluteNoopPath,
+        'http': absoluteNoopPath,
+        'https': absoluteNoopPath,
+        'zlib': absoluteNoopPath,
+        'readline': absoluteNoopPath,
+        'events': absoluteNoopPath,
+        'util': absoluteNoopPath,
+        'buffer': absoluteNoopPath,
+        'vm': absoluteNoopPath,
+        'dgram': absoluteNoopPath,
       },
     },
   },
   webpack: (config, { isServer }) => {
     if (!isServer) {
+      // En el lado del cliente, redirigimos todos los módulos de Node.js a nuestro shim.
       const nodeModules = [
         'fs', 'fs/promises', 'net', 'tls', 'child_process', 'perf_hooks', 'async_hooks', 
         'dns', 'http2', 'path', 'os', 'crypto', 'stream', 'http', 'https', 
@@ -72,8 +82,29 @@ const nextConfig: NextConfig = {
       ];
       
       nodeModules.forEach(mod => {
-        config.resolve.alias[mod] = noopPath;
+        config.resolve.alias[mod] = absoluteNoopPath;
       });
+
+      // Fallback para Webpack 5
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
+        child_process: false,
+        os: false,
+        path: false,
+        crypto: false,
+        stream: false,
+        http: false,
+        https: false,
+        zlib: false,
+        util: false,
+        events: false,
+        buffer: false,
+        vm: false,
+        async_hooks: false,
+      };
     }
     return config;
   },

@@ -1,9 +1,10 @@
+
 /**
- * @fileOverview Un módulo de sustitución (shim) exhaustivo y universal para Node.js.
- * Diseñado para satisfacer los requisitos de exportación estática de Next.js 15 + Turbopack.
+ * @fileOverview Un módulo de sustitución (shim) universal para Node.js.
+ * Exporta implementaciones vacías o mínimas de módulos de servidor para el navegador.
  */
 
-// 1. Clases base y mocks para codificación (requeridos por Firebase/util)
+// Utilidades de codificación
 export class TextEncoder {
   encode() { return new Uint8Array(); }
 }
@@ -12,6 +13,7 @@ export class TextDecoder {
   decode() { return ''; }
 }
 
+// Emisor de eventos básico
 export class EventEmitter {
   static EventEmitter = EventEmitter;
   on() { return this; }
@@ -31,6 +33,7 @@ export class EventEmitter {
   eventNames() { return []; }
 }
 
+// Mocks de Streams
 export class Stream extends EventEmitter {
   static Stream = Stream;
 }
@@ -63,27 +66,9 @@ export class Duplex extends Readable {
   static Duplex = Duplex;
 }
 
-export class Transform extends Duplex {
-  static Transform = Transform;
-  _transform() {}
-  _flush() {}
-}
-
-// 2. Exportaciones específicas para promesas (requeridas por Genkit)
-export const promises = {
-  readFile: async () => '',
-  writeFile: async () => {},
-  access: async () => {},
-  mkdir: async () => {},
-  readdir: async () => [],
-  stat: async () => ({ isDirectory: () => false, size: 0 }),
-  lstat: async () => ({ isDirectory: () => false, size: 0 }),
-  unlink: async () => {},
-};
-
-// 3. Funciones de utilidad comunes (Path, Utils, Crypto)
-export const join = (...args: string[]) => args.filter(Boolean).join('/');
-export const resolve = (...args: string[]) => args.filter(Boolean).join('/');
+// Utilidades de Path (Navegador)
+export const join = (...args: any[]) => args.filter(Boolean).join('/');
+export const resolve = (...args: any[]) => args.filter(Boolean).join('/');
 export const dirname = (p: string) => p.split('/').slice(0, -1).join('/') || '.';
 export const basename = (p: string) => p.split('/').pop() || '';
 export const extname = (p: string) => {
@@ -100,6 +85,7 @@ export const parse = (p: string) => ({
 });
 export const sep = '/';
 
+// Utilidades de Node.js (util)
 export const inherits = (ctor: any, superCtor: any) => {
   if (superCtor) {
     ctor.super_ = superCtor;
@@ -115,45 +101,40 @@ export const promisify = (fn: any) => {
 
 export const debuglog = () => () => {};
 export const inspect = (obj: any) => typeof obj === 'string' ? obj : JSON.stringify(obj);
-export const format = (str: string, ...args: any[]) => str;
+export const format = (str: string, ..._args: any[]) => str;
 
+// Crypto & File System
 export const randomBytes = (size: number) => new Uint8Array(size);
 export const createHash = () => ({ update: () => ({ digest: () => '' }) });
 export const createHmac = () => ({ update: () => ({ digest: () => '' }) });
 
-// 4. Shim Universal (Función + Objeto)
-function UniversalNoopShim(this: any) {
-  return this;
-}
+export const promises = {
+  readFile: async () => '',
+  writeFile: async () => {},
+  access: async () => {},
+  mkdir: async () => {},
+  readdir: async () => [],
+  stat: async () => ({ isDirectory: () => false, size: 0 }),
+  lstat: async () => ({ isDirectory: () => false, size: 0 }),
+  unlink: async () => {},
+};
 
-inherits(UniversalNoopShim, EventEmitter);
+export const readFileSync = () => '';
+export const writeFileSync = () => {};
+export const existsSync = () => false;
 
-Object.assign(UniversalNoopShim, {
-  EventEmitter, Stream, Readable, Writable, Duplex, Transform,
-  TextEncoder, TextDecoder,
+// Exportación por defecto para compatibilidad total
+const noop = {
   join, resolve, dirname, basename, extname, parse, sep,
   inherits, promisify, debuglog, inspect, format,
   randomBytes, createHash, createHmac,
-  promises,
-  readFileSync: () => '',
-  writeFileSync: () => {},
-  existsSync: () => false,
-  lstatSync: () => ({ isDirectory: () => false }),
+  promises, readFileSync, writeFileSync, existsSync,
+  TextEncoder, TextDecoder, EventEmitter, Stream, Readable, Writable,
+  createSocket: () => ({ on: () => {}, send: () => {}, close: () => {}, bind: () => {} }),
+  AsyncLocalStorage: class { getStore() { return undefined; } run(_: any, callback: any) { return callback(); } },
   platform: () => 'browser',
   arch: () => 'x64',
-  release: () => '',
-  type: () => '',
   performance: typeof window !== 'undefined' ? window.performance : { now: () => Date.now() },
-  AsyncLocalStorage: class {
-    getStore() { return undefined; }
-    run(store: any, callback: any) { return callback(); }
-  },
-  createSocket: () => ({
-    on: () => {},
-    send: () => {},
-    close: () => {},
-    bind: () => {},
-  }),
-});
+};
 
-export default UniversalNoopShim;
+export default noop;
