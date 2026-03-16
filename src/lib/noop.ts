@@ -89,6 +89,7 @@ export const delimiter = ':';
 export const inspect = proxy;
 export const inherits = proxy;
 export const promisify = (fn: any) => fn || proxy;
+export const deprecate = (fn: any) => fn;
 export const format = proxy;
 export const debuglog = proxy;
 export const types = proxy;
