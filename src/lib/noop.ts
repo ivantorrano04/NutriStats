@@ -56,6 +56,7 @@ export const HTTP2_HEADER_STATUS = ':status';
 
 // crypto
 export const randomBytes = proxy;
+export const randomUUID = proxy;
 export const createHash = proxy;
 export const createHmac = proxy;
 export const pbkdf2 = proxy;
