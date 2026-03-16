@@ -112,6 +112,7 @@ export const createWriteStream = proxy;
 // os
 export const homedir = () => '/';
 export const arch = () => 'x64';
+export const hostname = () => 'localhost';
 export const platform = () => 'browser';
 export const cpus = () => [];
 export const totalmem = () => 0;
