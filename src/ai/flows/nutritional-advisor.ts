@@ -1,8 +1,6 @@
-'use server';
 /**
  * @fileOverview Un asesor nutricional de élite impulsado por IA.
- * 
- * - getNutritionalAdvice - Analiza el progreso diario y genera consejos estratégicos.
+ * Refactored for Client-Side execution (Static Export).
  */
 
 import { ai } from '@/ai/genkit';

@@ -1,8 +1,6 @@
-'use server';
 /**
  * @fileOverview Un generador de recetas táctico que optimiza tus macros restantes.
- * 
- * - suggestMeal - Analiza el déficit de macros y sugiere una receta personalizada.
+ * Refactored for Client-Side execution (Static Export).
  */
 
 import { ai } from '@/ai/genkit';
