@@ -43,7 +43,6 @@ export const get = proxy;
 export const request = proxy;
 export const createServer = proxy;
 export const connect = proxy;
-export const constants = proxy;
 export const codes = proxy;
 export const createConnection = proxy;
 
@@ -56,7 +55,7 @@ export const HTTP2_HEADER_STATUS = ':status';
 
 // crypto
 export const randomBytes = proxy;
-export const randomUUID = proxy;
+export const randomUUID = () => '00000000-0000-0000-0000-000000000000';
 export const createHash = proxy;
 export const createHmac = proxy;
 export const pbkdf2 = proxy;
@@ -82,7 +81,7 @@ export const relative = proxy;
 export const isAbsolute = proxy;
 export const normalize = proxy;
 export const parse = proxy;
-export const format_path = proxy; // evitamos colisión con util.format
+export const format_path = proxy; 
 export const sep = '/';
 export const delimiter = ':';
 
@@ -102,6 +101,7 @@ export class TextDecoder {
 }
 
 // fs
+export const constants = proxy; 
 export const promises = proxy;
 export const readFile = proxy;
 export const writeFile = proxy;
@@ -125,7 +125,7 @@ export const freemem = () => 0;
 export const networkInterfaces = () => ({});
 export const release = () => '';
 export const type = () => 'browser';
-export const userInfo = proxy;
+export const userInfo = () => ({ username: 'browser' });
 
 // dgram
 export const createSocket = proxy;
