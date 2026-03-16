@@ -39,6 +39,7 @@ const nextConfig: NextConfig = {
     turbo: {
       resolveAlias: {
         'fs': noopPath,
+        'fs/promises': noopPath,
         'net': noopPath,
         'tls': noopPath,
         'child_process': noopPath,
@@ -65,7 +66,7 @@ const nextConfig: NextConfig = {
   webpack: (config, { isServer }) => {
     if (!isServer) {
       const nodeModules = [
-        'fs', 'net', 'tls', 'child_process', 'perf_hooks', 'async_hooks', 
+        'fs', 'fs/promises', 'net', 'tls', 'child_process', 'perf_hooks', 'async_hooks', 
         'dns', 'http2', 'path', 'os', 'crypto', 'stream', 'http', 'https', 
         'zlib', 'readline', 'events', 'util', 'buffer', 'vm', 'dgram'
       ];

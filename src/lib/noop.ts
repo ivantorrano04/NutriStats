@@ -69,7 +69,19 @@ export class Transform extends Duplex {
   _flush() {}
 }
 
-// 2. Funciones de utilidad comunes (Path, Utils, Crypto)
+// 2. Exportaciones específicas para promesas (requeridas por Genkit)
+export const promises = {
+  readFile: async () => '',
+  writeFile: async () => {},
+  access: async () => {},
+  mkdir: async () => {},
+  readdir: async () => [],
+  stat: async () => ({ isDirectory: () => false, size: 0 }),
+  lstat: async () => ({ isDirectory: () => false, size: 0 }),
+  unlink: async () => {},
+};
+
+// 3. Funciones de utilidad comunes (Path, Utils, Crypto)
 export const join = (...args: string[]) => args.filter(Boolean).join('/');
 export const resolve = (...args: string[]) => args.filter(Boolean).join('/');
 export const dirname = (p: string) => p.split('/').slice(0, -1).join('/') || '.';
@@ -109,7 +121,7 @@ export const randomBytes = (size: number) => new Uint8Array(size);
 export const createHash = () => ({ update: () => ({ digest: () => '' }) });
 export const createHmac = () => ({ update: () => ({ digest: () => '' }) });
 
-// 3. Shim Universal (Función + Objeto)
+// 4. Shim Universal (Función + Objeto)
 function UniversalNoopShim(this: any) {
   return this;
 }
@@ -122,14 +134,11 @@ Object.assign(UniversalNoopShim, {
   join, resolve, dirname, basename, extname, parse, sep,
   inherits, promisify, debuglog, inspect, format,
   randomBytes, createHash, createHmac,
+  promises,
   readFileSync: () => '',
   writeFileSync: () => {},
   existsSync: () => false,
   lstatSync: () => ({ isDirectory: () => false }),
-  promises: {
-    readFile: async () => '',
-    writeFile: async () => {},
-  },
   platform: () => 'browser',
   arch: () => 'x64',
   release: () => '',
