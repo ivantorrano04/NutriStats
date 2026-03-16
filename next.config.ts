@@ -33,9 +33,38 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  experimental: {
+    turbo: {
+      resolveAlias: {
+        /**
+         * En Next.js 15 + Turbopack, no se puede usar 'false' directamente como en Webpack.
+         * Mapeamos los módulos de Node.js a un archivo real vacío para evitar errores de resolución.
+         */
+        'fs': './src/lib/noop.ts',
+        'net': './src/lib/noop.ts',
+        'tls': './src/lib/noop.ts',
+        'child_process': './src/lib/noop.ts',
+        'perf_hooks': './src/lib/noop.ts',
+        'async_hooks': './src/lib/noop.ts',
+        'dns': './src/lib/noop.ts',
+        'http2': './src/lib/noop.ts',
+        'path': './src/lib/noop.ts',
+        'os': './src/lib/noop.ts',
+        'crypto': './src/lib/noop.ts',
+        'stream': './src/lib/noop.ts',
+        'http': './src/lib/noop.ts',
+        'https': './src/lib/noop.ts',
+        'zlib': './src/lib/noop.ts',
+        'readline': './src/lib/noop.ts',
+      },
+    },
+  },
   webpack: (config, { isServer }) => {
     if (!isServer) {
-      // Evita que Webpack intente resolver módulos de Node.js en el cliente
+      /**
+       * Configuración para Webpack (usado en next build fuera de turbo).
+       * Aquí 'false' sí indica que el módulo debe ser ignorado.
+       */
       config.resolve.fallback = {
         ...config.resolve.fallback,
         async_hooks: false,
@@ -44,6 +73,16 @@ const nextConfig: NextConfig = {
         tls: false,
         child_process: false,
         perf_hooks: false,
+        dns: false,
+        http2: false,
+        path: false,
+        os: false,
+        crypto: false,
+        stream: false,
+        http: false,
+        https: false,
+        zlib: false,
+        readline: false,
       };
     }
     return config;
