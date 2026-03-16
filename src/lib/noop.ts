@@ -78,6 +78,10 @@ export const dirname = proxy;
 export const basename = proxy;
 export const extname = proxy;
 export const relative = proxy;
+export const isAbsolute = proxy;
+export const normalize = proxy;
+export const parse = proxy;
+export const format_path = proxy; // evitamos colisión con util.format
 export const sep = '/';
 export const delimiter = ':';
 
