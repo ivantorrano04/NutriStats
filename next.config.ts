@@ -41,7 +41,7 @@ const nextConfig: NextConfig = {
   experimental: {
     turbo: {
       resolveAlias: {
-        // Redirigimos módulos de Node.js al Universal Shim para Turbopack
+        // Redirigimos módulos de Node.js y paquetes de servidor al Universal Shim para Turbopack
         'fs': './src/lib/noop.ts',
         'fs/promises': './src/lib/noop.ts',
         'path': './src/lib/noop.ts',
@@ -64,6 +64,8 @@ const nextConfig: NextConfig = {
         'vm': './src/lib/noop.ts',
         'async_hooks': './src/lib/noop.ts',
         'perf_hooks': './src/lib/noop.ts',
+        'express': './src/lib/noop.ts',
+        'get-port': './src/lib/noop.ts',
       },
     },
   },
@@ -75,7 +77,8 @@ const nextConfig: NextConfig = {
       const nodeModules = [
         'fs', 'fs/promises', 'net', 'tls', 'child_process', 'perf_hooks', 'async_hooks', 
         'dns', 'http2', 'path', 'os', 'crypto', 'stream', 'http', 'https', 
-        'zlib', 'readline', 'events', 'util', 'buffer', 'vm', 'dgram'
+        'zlib', 'readline', 'events', 'util', 'buffer', 'vm', 'dgram',
+        'express', 'get-port'
       ];
       
       nodeModules.forEach(mod => {

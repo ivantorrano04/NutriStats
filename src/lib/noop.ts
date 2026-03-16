@@ -38,6 +38,9 @@ const proxy: any = new Proxy(noop, handler);
 
 // --- Exportaciones Nombradas para desestructuraciones comunes ---
 
+// crypto
+export const randomBytes = proxy;
+
 // http2 constants
 export const constants = proxy;
 export const HTTP2_HEADER_AUTHORITY = ':authority';
