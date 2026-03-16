@@ -1,0 +1,107 @@
+
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Representa la información personal, metas y preferencias de un usuario.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "gender": { "type": "string" },
+        "peso": { "type": "number" },
+        "targetWeight": { "type": "number" },
+        "altura": { "type": "number" },
+        "edad": { "type": "number" },
+        "actividad": { "type": "string" },
+        "objetivo": { "type": "string" },
+        "intensity": { "type": "string", "enum": ["saludable", "moderado", "intenso"] },
+        "calorieGoal": { "type": "number" },
+        "proteinGoalGrams": { "type": "number" },
+        "carbohydrateGoalGrams": { "type": "number" },
+        "fatGoalGrams": { "type": "number" },
+        "metaAguaMl": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "gender", "calorieGoal", "createdAt"]
+    },
+    "MealLog": {
+      "title": "MealLog",
+      "type": "object",
+      "description": "Registro de una comida individual con su análisis nutricional.",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "logDateTime": { "type": "string", "format": "date-time" },
+        "mealType": { "type": "string" },
+        "notes": { "type": "string" },
+        "photoDataUri": { "type": "string" },
+        "analysisRaw": { "type": "string" },
+        "totalCalories": { "type": "number" },
+        "totalProteins": { "type": "number" },
+        "totalCarbohydrates": { "type": "number" },
+        "totalFats": { "type": "number" }
+      }
+    },
+    "Friendship": {
+      "title": "Friendship",
+      "type": "object",
+      "description": "Relación de amistad entre dos usuarios.",
+      "properties": {
+        "friendId": { "type": "string" },
+        "friendName": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending_sent", "pending_received", "accepted"] },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "AppNotification": {
+      "title": "AppNotification",
+      "type": "object",
+      "description": "Notificaciones internas de la aplicación para el usuario.",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "type": { "type": "string", "enum": ["info", "success", "warning", "goal", "friend_request", "praise"] },
+        "read": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    }
+  },
+  "auth": {
+    "providers": ["password", "anonymous"]
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "#/backend/entities/UserProfile",
+      "description": "Perfiles de usuario."
+    },
+    "/users/{userId}/friendships/{friendId}": {
+      "schema": "#/backend/entities/Friendship",
+      "description": "Lista de amigos y solicitudes."
+    },
+    "/users/{userId}/mealLogs/{mealLogId}": {
+      "schema": "#/backend/entities/MealLog",
+      "description": "Registros de comidas del usuario."
+    },
+    "/users/{userId}/notifications/{notificationId}": {
+      "schema": "#/backend/entities/AppNotification",
+      "description": "Notificaciones del usuario."
+    },
+    "/users/{userId}/weightLogs/{weightLogId}": {
+      "schema": "object",
+      "description": "Historial de peso."
+    },
+    "/users/{userId}/favoriteRecipes/{recipeId}": {
+      "schema": "object",
+      "description": "Recetas favoritas."
+    },
+    "/users/{userId}/dailySummaries/{summaryDate}": {
+      "schema": "object",
+      "description": "Resúmenes diarios."
+    }
+  }
+}

@@ -1,0 +1,59 @@
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isFriend(userId) {
+      return isSignedIn() && exists(/databases/$(database)/documents/users/$(userId)/friendships/$(request.auth.uid)) 
+             && get(/databases/$(database)/documents/users/$(userId)/friendships/$(request.auth.uid)).data.status == 'accepted';
+    }
+
+    match /users/{userId} {
+      // Permite obtener perfiles individuales para buscar amigos por ID
+      allow get: if isSignedIn();
+      // Lectura completa (incluyendo metas) solo para dueños y amigos aceptados
+      allow read: if isOwner(userId) || isFriend(userId);
+      allow write: if isOwner(userId);
+      
+      match /friendships/{friendId} {
+        // Permite escribir solicitudes si eres el dueño o el destinatario de la solicitud
+        allow write: if isSignedIn() && (isOwner(userId) || request.auth.uid == friendId);
+        allow read: if isOwner(userId);
+      }
+      
+      match /mealLogs/{mealLogId} {
+        allow read: if isOwner(userId) || isFriend(userId);
+        allow write: if isOwner(userId);
+      }
+      
+      match /dailySummaries/{summaryDate} {
+        allow read: if isOwner(userId) || isFriend(userId);
+        allow write: if isOwner(userId);
+      }
+      
+      match /notifications/{notificationId} {
+        // El dueño lee sus propias notificaciones (incluye listado)
+        allow read: if isOwner(userId);
+        // Cualquier usuario logueado puede crear una notificación para otro (invitaciones, reacciones)
+        allow create: if isSignedIn();
+        // Solo el dueño puede marcarlas como leídas
+        allow update, delete: if isOwner(userId);
+      }
+
+      match /favoriteRecipes/{recipeId} {
+        allow read, write: if isOwner(userId);
+      }
+      
+      match /weightLogs/{weightLogId} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+  }
+}
