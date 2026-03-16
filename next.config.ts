@@ -1,10 +1,9 @@
-
 import type {NextConfig} from 'next';
 import path from 'path';
 
 /**
  * Configuración de Next.js optimizada para exportación estática (Capacitor/Mobile).
- * Maneja la sustitución de módulos de Node.js para el entorno del navegador y Turbopack.
+ * Maneja la sustitución de módulos de Node.js mediante un Universal Shim.
  */
 
 const nextConfig: NextConfig = {
@@ -42,29 +41,35 @@ const nextConfig: NextConfig = {
   experimental: {
     turbo: {
       resolveAlias: {
-        // Para Turbopack, usamos rutas relativas al proyecto sin el prefijo './'
-        // Esto evita el error "server relative imports are not implemented yet"
-        'fs': 'src/lib/noop.ts',
-        'fs/promises': 'src/lib/noop.ts',
-        'net': 'src/lib/noop.ts',
-        'tls': 'src/lib/noop.ts',
-        'dns': 'src/lib/noop.ts',
-        'dgram': 'src/lib/noop.ts',
-        'http2': 'src/lib/noop.ts',
-        'child_process': 'src/lib/noop.ts',
-        'crypto': 'src/lib/noop.ts',
-        'os': 'src/lib/noop.ts',
-        'util': 'src/lib/noop.ts',
-        'path': 'src/lib/noop.ts',
-        'stream': 'src/lib/noop.ts',
-        'async_hooks': 'src/lib/noop.ts',
+        // Redirigimos módulos de Node.js al Universal Shim para Turbopack
+        'fs': './src/lib/noop.ts',
+        'fs/promises': './src/lib/noop.ts',
+        'path': './src/lib/noop.ts',
+        'util': './src/lib/noop.ts',
+        'events': './src/lib/noop.ts',
+        'stream': './src/lib/noop.ts',
+        'crypto': './src/lib/noop.ts',
+        'os': './src/lib/noop.ts',
+        'http': './src/lib/noop.ts',
+        'https': './src/lib/noop.ts',
+        'http2': './src/lib/noop.ts',
+        'net': './src/lib/noop.ts',
+        'tls': './src/lib/noop.ts',
+        'dns': './src/lib/noop.ts',
+        'dgram': './src/lib/noop.ts',
+        'zlib': './src/lib/noop.ts',
+        'readline': './src/lib/noop.ts',
+        'child_process': './src/lib/noop.ts',
+        'buffer': './src/lib/noop.ts',
+        'vm': './src/lib/noop.ts',
+        'async_hooks': './src/lib/noop.ts',
+        'perf_hooks': './src/lib/noop.ts',
       },
     },
   },
   webpack: (config, { isServer }) => {
+    // Aplicamos los alias de Webpack solo en el cliente
     if (!isServer) {
-      // En el cliente, redirigimos los módulos de Node a nuestro shim.
-      // Usamos path.resolve para asegurar rutas absolutas en Webpack.
       const noopPath = path.resolve(process.cwd(), 'src/lib/noop.ts');
       
       const nodeModules = [
@@ -75,6 +80,7 @@ const nextConfig: NextConfig = {
       
       nodeModules.forEach(mod => {
         config.resolve.alias[mod] = noopPath;
+        config.resolve.alias[`node:${mod}`] = noopPath;
       });
 
       config.resolve.fallback = {

@@ -1,61 +1,72 @@
-
 /**
- * @fileOverview Un módulo de sustitución (shim) universal para Node.js.
- * Diseñado para actuar como objeto, función y constructor simultáneamente.
+ * @fileOverview Universal Proxy Shim.
+ * Este archivo actúa como un sustituto universal para módulos de Node.js en el cliente.
+ * Proporciona un objeto Proxy que puede actuar como función, constructor u objeto,
+ * e incluye exportaciones nombradas para satisfacer desestructuraciones (como http2.constants).
  */
 
-// Un emisor de eventos que puede ser instanciado
-function NoopEmitter() {}
-NoopEmitter.prototype.on = function() { return this; };
-NoopEmitter.prototype.off = function() { return this; };
-NoopEmitter.prototype.once = function() { return this; };
-NoopEmitter.prototype.emit = function() { return false; };
-NoopEmitter.prototype.removeAllListeners = function() { return this; };
-NoopEmitter.prototype.setMaxListeners = function() { return this; };
-NoopEmitter.prototype.listeners = function() { return []; };
+const noop = function() {};
 
-// Clases base para streams
-function NoopStream() { NoopEmitter.call(this); }
-NoopStream.prototype = Object.create(NoopEmitter.prototype);
+// Handler del Proxy para interceptar cualquier acceso y retornar el mismo proxy
+const handler: ProxyHandler<any> = {
+  get: (target, prop) => {
+    if (prop === 'default') return proxy;
+    if (prop === '__esModule') return true;
+    
+    // Soporte para http2.constants y otros objetos anidados
+    if (prop === 'constants') return proxy;
+    if (prop === 'promises') return proxy;
 
-function Readable() { NoopStream.call(this); }
-Readable.prototype = Object.create(NoopStream.prototype);
-Readable.prototype.pipe = function(dest: any) { return dest; };
-Readable.prototype.read = function() { return null; };
-Readable.from = function() { return new Readable(); };
-
-function Writable() { NoopStream.call(this); }
-Writable.prototype = Object.create(NoopStream.prototype);
-Writable.prototype.write = function() { return true; };
-Writable.prototype.end = function() {};
-
-// Exportaciones de Util
-export const inspect = (obj: any) => (typeof obj === 'string' ? obj : JSON.stringify(obj));
-export const inherits = (ctor: any, superCtor: any) => {
-  if (superCtor) {
-    ctor.super_ = superCtor;
-    Object.setPrototypeOf(ctor.prototype, superCtor.prototype);
-  }
-};
-export const promisify = (fn: any) => {
-  const p: any = (...args: any[]) => fn(...args);
-  p.custom = Symbol('util.promisify.custom');
-  return p;
+    // Soporte para primitivos
+    if (prop === Symbol.toPrimitive) {
+      return (hint: string) => {
+        if (hint === 'number') return 0;
+        return 'noop';
+      };
+    }
+    
+    if (prop === 'toString' || prop === Symbol.toStringTag) return () => 'noop';
+    
+    // Retornar el mismo proxy para permitir encadenamiento infinito
+    return proxy;
+  },
+  apply: () => proxy,
+  construct: () => proxy,
 };
 
-// Exportaciones de Path
-export const join = (...args: any[]) => args.filter(Boolean).join('/');
-export const resolve = (...args: any[]) => args.filter(Boolean).join('/');
-export const dirname = (p: string) => p.split('/').slice(0, -1).join('/') || '.';
-export const basename = (p: string) => p.split('/').pop() || '';
-export const extname = (p: string) => {
-  const b = basename(p);
-  const i = b.lastIndexOf('.');
-  return i <= 0 ? '' : b.substring(i);
-};
+const proxy: any = new Proxy(noop, handler);
+
+// --- Exportaciones Nombradas para desestructuraciones comunes ---
+
+// http2 constants
+export const constants = proxy;
+export const HTTP2_HEADER_AUTHORITY = ':authority';
+export const HTTP2_HEADER_METHOD = ':method';
+export const HTTP2_HEADER_PATH = ':path';
+export const HTTP2_HEADER_SCHEME = ':scheme';
+export const HTTP2_HEADER_STATUS = ':status';
+
+// events & stream
+export const EventEmitter = proxy;
+export const Readable = proxy;
+export const Writable = proxy;
+export const Transform = proxy;
+export const Duplex = proxy;
+export const Stream = proxy;
+
+// path
+export const join = proxy;
+export const resolve = proxy;
+export const dirname = proxy;
+export const basename = proxy;
+export const extname = proxy;
 export const sep = '/';
+export const delimiter = ':';
 
-// Clases de Codificación (Soporte estático para Turbopack)
+// util
+export const inspect = proxy;
+export const inherits = proxy;
+export const promisify = (fn: any) => fn || proxy;
 export class TextEncoder {
   encode() { return new Uint8Array(); }
 }
@@ -63,41 +74,16 @@ export class TextDecoder {
   decode() { return ''; }
 }
 
-// File System Promises
-export const promises = {
-  readFile: async () => '',
-  writeFile: async () => {},
-  access: async () => {},
-  mkdir: async () => {},
-  readdir: async () => [],
-  stat: async () => ({ isDirectory: () => false, size: 0 }),
-  unlink: async () => {},
-};
-
-// Exportación por defecto
-const noopProxy = new Proxy(() => {}, {
-  get: (target, prop) => {
-    if (prop === 'EventEmitter') return NoopEmitter;
-    if (prop === 'Stream') return NoopStream;
-    if (prop === 'Readable') return Readable;
-    if (prop === 'Writable') return Writable;
-    if (prop === 'promises') return promises;
-    if (prop === 'TextEncoder') return TextEncoder;
-    if (prop === 'TextDecoder') return TextDecoder;
-    if (prop === 'join') return join;
-    if (prop === 'resolve') return resolve;
-    // Retornar la función noop para cualquier otro método
-    return target;
-  },
-  apply: (target) => target,
-  construct: () => ({})
-});
-
-export default noopProxy;
-
-// Exportaciones nombradas adicionales para compatibilidad con CommonJS
-export { NoopEmitter as EventEmitter, NoopStream as Stream, Readable, Writable };
+// fs
+export const promises = proxy;
+export const readFile = proxy;
+export const writeFile = proxy;
 export const readFileSync = () => '';
-export const writeFileSync = () => {};
 export const existsSync = () => false;
-export const createSocket = () => ({ on: () => {}, send: () => {}, close: () => {}, bind: () => {} });
+
+// dgram / net / tls
+export const createSocket = proxy;
+export const createServer = proxy;
+export const connect = proxy;
+
+export default proxy;
