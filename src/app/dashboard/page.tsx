@@ -63,7 +63,7 @@ export default function DashboardPage() {
   const { data: summary } = useDoc<any>(summaryDocRef);
 
   useEffect(() => {
-    if (!user || !db) return;
+    if (!user || !db || !todayDate) return;
     
     const fetchSocialActivity = async () => {
       setLoadingSocial(true);
@@ -71,13 +71,14 @@ export default function DashboardPage() {
         const friendsSnap = await getDocs(query(
           collection(db, 'users', user.uid, 'friendships'),
           where('status', '==', 'accepted'),
-          limit(5)
+          limit(10)
         ));
         
         const friendsData = friendsSnap.docs.map(d => d.data() as Friendship);
         const mealsPromises = friendsData.map(async (friend) => {
           const mSnap = await getDocs(query(
             collection(db, 'users', friend.friendId, 'mealLogs'),
+            where('logDateTime', '>=', todayDate),
             orderBy('logDateTime', 'desc'),
             limit(1)
           ));
@@ -102,7 +103,7 @@ export default function DashboardPage() {
     };
 
     fetchSocialActivity();
-  }, [user, db]);
+  }, [user, db, todayDate]);
 
   useEffect(() => {
     if (profile && profile.targetWeight && profile.objetivo !== 'mantenimiento') {
@@ -263,40 +264,6 @@ export default function DashboardPage() {
           </div>
         </header>
 
-        {friendMeals.length > 0 && (
-          <section className="space-y-4">
-            <div className="flex justify-between items-center px-2">
-               <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                 <Users className="w-3 h-3 text-primary" /> Actividad de Amigos
-               </h3>
-               <Link href="/amigos" className="text-[10px] font-bold text-primary hover:underline uppercase tracking-wider">Ver todos</Link>
-            </div>
-            <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar -mx-2 px-2">
-              {friendMeals.map((m) => (
-                <Link key={m.id} href={`/amigos`} className="shrink-0">
-                  <div className="glass p-3 rounded-[2rem] flex items-center gap-3 shrink-0 min-w-[200px] border-white/10 ios-btn">
-                    <div className="w-12 h-12 rounded-2xl bg-secondary/50 overflow-hidden relative shrink-0">
-                      {m.photoDataUri ? (
-                        <img src={m.photoDataUri} alt={m.friendName} className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-primary font-bold">{m.friendName[0]}</div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-bold text-xs truncate">{m.friendName}</p>
-                      <p className="text-[9px] text-muted-foreground truncate">{m.mealType}</p>
-                      <div className="flex items-center gap-1 mt-1">
-                        <Flame className="w-2.5 h-2.5 text-orange-500 fill-orange-500" />
-                        <span className="text-[9px] font-bold text-orange-500">{m.totalCalories} kcal</span>
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </section>
-        )}
-
         <Link href="/registrar" className="block animate-float">
           <Button className="w-full h-24 rounded-[3rem] bg-primary hover:bg-primary/90 text-white font-bold text-2xl shadow-2xl shadow-primary/30 flex items-center justify-center gap-4 group ios-btn">
             <div className="w-14 h-14 bg-white/20 rounded-[1.5rem] flex items-center justify-center group-hover:scale-110 transition-transform backdrop-blur-md">
@@ -306,6 +273,43 @@ export default function DashboardPage() {
             <Plus className="w-8 h-8 ml-auto opacity-50" />
           </Button>
         </Link>
+
+        {friendMeals.length > 0 && (
+          <section className="space-y-4">
+             <div className="flex justify-between items-center px-2">
+               <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                 <Users className="w-3 h-3 text-primary" /> Pulso de la Comunidad
+               </h3>
+               <Link href="/amigos" className="text-[10px] font-bold text-primary hover:underline uppercase tracking-wider">Ver todos</Link>
+            </div>
+            <Card className="glass rounded-[2.5rem] overflow-hidden border-white/10 shadow-xl">
+              <CardContent className="p-4 space-y-4">
+                {friendMeals.map((m) => (
+                  <Link key={m.id} href={`/amigos`} className="flex items-center gap-4 p-3 hover:bg-white/5 rounded-2xl transition-all ios-btn group">
+                    <div className="w-12 h-12 rounded-xl bg-secondary/50 overflow-hidden relative shrink-0">
+                      {m.photoDataUri ? (
+                        <img src={m.photoDataUri} alt={m.friendName} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-primary font-bold">{m.friendName[0]}</div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-start">
+                        <p className="font-bold text-sm truncate">{m.friendName}</p>
+                        <span className="text-[9px] font-bold text-muted-foreground opacity-50">Hoy</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground truncate">{m.mealType}</p>
+                    </div>
+                    <div className="flex items-center gap-1 bg-orange-500/10 px-2 py-1 rounded-full">
+                        <Flame className="w-3 h-3 text-orange-500 fill-orange-500" />
+                        <span className="text-[10px] font-bold text-orange-500">{m.totalCalories}</span>
+                    </div>
+                  </Link>
+                ))}
+              </CardContent>
+            </Card>
+          </section>
+        )}
 
         {prediction && (
           <Card className="glass rounded-[2.5rem] overflow-hidden relative group border-primary/20">
@@ -429,6 +433,22 @@ export default function DashboardPage() {
             )}
           </div>
         </section>
+
+        {/* Modal de Carga de IA */}
+        <Dialog open={loadingSuggestion || loadingAdvice} onOpenChange={() => {}}>
+          <DialogContent className="glass border-none max-w-xs p-10 rounded-[3rem] flex flex-col items-center justify-center text-center space-y-6 outline-none">
+            <div className="relative">
+              <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full animate-pulse" />
+              <Loader2 className="w-16 h-16 animate-spin text-primary relative z-10" />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-xl font-headline font-bold">Consultando a la IA</h3>
+              <p className="text-sm text-muted-foreground font-medium px-4 leading-relaxed">
+                {loadingSuggestion ? "Diseñando tu receta táctica perfecta..." : "Analizando tus macros y progreso..."}
+              </p>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         <Dialog open={!!advice} onOpenChange={() => setAdvice(null)}>
           <DialogContent className="glass border-none max-w-md p-10 rounded-[3rem]">

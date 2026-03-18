@@ -1,10 +1,6 @@
 'use server';
 /**
  * @fileOverview A Genkit flow for analyzing a meal photo to estimate its nutritional content.
- *
- * - analyzeMealPhotoForNutrients - A function that handles the meal photo analysis process.
- * - AnalyzeMealPhotoForNutrientsInput - The input type for the analyzeMealPhotoForNutrients function.
- * - AnalyzeMealPhotoForNutrientsOutput - The return type for the analyzeMealPhotoForNutrients function.
  */
 
 import {ai} from '@/ai/genkit';
@@ -24,7 +20,7 @@ const AnalyzeMealPhotoForNutrientsInputSchema = z.object({
 });
 export type AnalyzeMealPhotoForNutrientsInput = z.infer<typeof AnalyzeMealPhotoForNutrientsInputSchema>;
 
-// Output Schema for the prompt (AI's direct response, without the raw stringified version)
+// Output Schema for the prompt
 const AnalyzeMealPhotoNutritionalOutputSchema = z.object({
   calories: z.number().describe('Estimated total calories in kcal.'),
   protein: z.number().describe('Estimated total protein in grams.'),
@@ -33,7 +29,7 @@ const AnalyzeMealPhotoNutritionalOutputSchema = z.object({
 });
 type AnalyzeMealPhotoNutritionalOutput = z.infer<typeof AnalyzeMealPhotoNutritionalOutputSchema>;
 
-// Final Output Schema for the flow (includes raw AI response for persistence)
+// Final Output Schema
 const AnalyzeMealPhotoForNutrientsOutputSchema = AnalyzeMealPhotoNutritionalOutputSchema.extend({
     analysisRaw: z.string().describe('The complete JSON string representation of the AI-parsed nutritional data.'),
 });
@@ -74,24 +70,19 @@ const analyzeMealPhotoForNutrientsFlow = ai.defineFlow(
     outputSchema: AnalyzeMealPhotoForNutrientsOutputSchema,
   },
   async (input) => {
-    // Call the prompt. The AI is expected to return JSON matching AnalyzeMealPhotoNutritionalOutputSchema.
     const { output } = await analyzeMealPhotoPrompt(input);
 
-    // If output is null or undefined, handle gracefully.
     if (!output) {
-      throw new Error('AI analysis failed to produce nutritional data or could not parse the response.');
+      throw new Error('AI analysis failed to produce nutritional data.');
     }
 
-    // Construct the final output, including the stringified raw AI response.
-    const finalOutput: AnalyzeMealPhotoForNutrientsOutput = {
+    return {
       calories: output.calories,
       protein: output.protein,
       carbohydrates: output.carbohydrates,
       fats: output.fats,
-      analysisRaw: JSON.stringify(output), // Store the stringified version of what the AI returned and Genkit parsed
+      analysisRaw: JSON.stringify(output),
     };
-
-    return finalOutput;
   }
 );
 
