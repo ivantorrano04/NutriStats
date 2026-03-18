@@ -434,6 +434,22 @@ export default function DashboardPage() {
           </div>
         </section>
 
+        {/* Modal de Carga de IA */}
+        <Dialog open={loadingSuggestion || loadingAdvice} onOpenChange={() => {}}>
+          <DialogContent className="glass border-none max-w-xs p-10 rounded-[3rem] flex flex-col items-center justify-center text-center space-y-6 outline-none">
+            <div className="relative">
+              <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full animate-pulse" />
+              <Loader2 className="w-16 h-16 animate-spin text-primary relative z-10" />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-xl font-headline font-bold">Consultando a la IA</h3>
+              <p className="text-sm text-muted-foreground font-medium px-4 leading-relaxed">
+                {loadingSuggestion ? "Diseñando tu receta táctica perfecta..." : "Analizando tus macros y progreso..."}
+              </p>
+            </div>
+          </DialogContent>
+        </Dialog>
+
         <Dialog open={!!advice} onOpenChange={() => setAdvice(null)}>
           <DialogContent className="glass border-none max-w-md p-10 rounded-[3rem]">
             <DialogHeader className="sr-only"><DialogTitle>Consejo IA</DialogTitle></DialogHeader>
