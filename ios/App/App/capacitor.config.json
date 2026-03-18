@@ -2,5 +2,9 @@
 	"appId": "com.tuempresa.nutristats",
 	"appName": "NutriStats",
 	"webDir": "out",
+	"server": {
+		"androidScheme": "https",
+		"iosScheme": "capacitor"
+	},
 	"packageClassList": []
 }

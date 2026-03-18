@@ -5,10 +5,14 @@ const nextConfig: NextConfig = {
   images: {
     unoptimized: true,
   },
-  trailingSlash: true,
-  // ESTA LÍNEA ES VITAL para el protocolo file:// del iPhone
-  assetPrefix: './', 
+  // Al usar export estático, esto asegura que cada página tenga su carpeta /index.html
+  // Muy importante para que Capacitor no se pierda con las rutas
+  trailingSlash: true, 
   
+  // Si con la versión anterior te fallaba, prueba a COMENTAR el assetPrefix. 
+  // Capacitor maneja la raíz automáticamente si webDir está bien configurado.
+  // assetPrefix: './', 
+
   eslint: {
     ignoreDuringBuilds: true,
   },
