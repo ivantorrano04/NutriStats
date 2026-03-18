@@ -1,3 +1,4 @@
+
 /**
  * @fileOverview Universal Proxy Shim Pro.
  * Este archivo actúa como un sustituto universal para módulos de Node.js en el cliente.

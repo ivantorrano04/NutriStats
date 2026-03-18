@@ -1,3 +1,4 @@
+
 import type {NextConfig} from 'next';
 import path from 'path';
 
@@ -8,7 +9,7 @@ import path from 'path';
 
 const noopPath = './src/lib/noop.ts';
 const nodeModules = [
-  'fs', 'path', 'util', 'events', 'stream', 'crypto', 'os', 'http', 'https', 
+  'fs', 'fs/promises', 'path', 'util', 'util/types', 'events', 'stream', 'stream/promises', 'crypto', 'os', 'http', 'https', 
   'zlib', 'process', 'express', 'get-port', 'child_process', 'net', 'tls', 
   'dns', 'http2', 'readline', 'vm', 'buffer', 'dgram', 'perf_hooks', 'async_hooks',
   'url', 'querystring', 'string_decoder', 'timers'
