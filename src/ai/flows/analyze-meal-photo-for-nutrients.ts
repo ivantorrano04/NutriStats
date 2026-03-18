@@ -1,6 +1,6 @@
+'use server';
 /**
  * @fileOverview A Genkit flow for analyzing a meal photo to estimate its nutritional content.
- * Refactored for Client-Side execution (Static Export).
  */
 
 import {ai} from '@/ai/genkit';

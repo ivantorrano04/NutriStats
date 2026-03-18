@@ -1,6 +1,6 @@
+'use server';
 /**
  * @fileOverview Un generador de recetas táctico que optimiza tus macros restantes.
- * Refactored for Client-Side execution (Static Export).
  */
 
 import { ai } from '@/ai/genkit';
@@ -51,8 +51,19 @@ Instrucciones:
 4. Genera la respuesta en formato JSON estructurado.`,
 });
 
+const suggestMealFlow = ai.defineFlow(
+  {
+    name: 'suggestMealFlow',
+    inputSchema: SuggestMealInputSchema,
+    outputSchema: SuggestMealOutputSchema,
+  },
+  async (input) => {
+    const { output } = await suggestMealPrompt(input);
+    if (!output) throw new Error('No se pudo generar la sugerencia de comida.');
+    return output;
+  }
+);
+
 export async function suggestMeal(input: SuggestMealInput): Promise<SuggestMealOutput> {
-  const { output } = await suggestMealPrompt(input);
-  if (!output) throw new Error('No se pudo generar la sugerencia de comida.');
-  return output;
+  return suggestMealFlow(input);
 }

@@ -1,6 +1,6 @@
+'use server';
 /**
  * @fileOverview Un asesor nutricional de élite impulsado por IA.
- * Refactored for Client-Side execution (Static Export).
  */
 
 import { ai } from '@/ai/genkit';
@@ -54,8 +54,19 @@ Instrucciones:
 Genera una respuesta estratégica en JSON.`,
 });
 
+const advisorFlow = ai.defineFlow(
+  {
+    name: 'advisorFlow',
+    inputSchema: AdvisorInputSchema,
+    outputSchema: AdvisorOutputSchema,
+  },
+  async (input) => {
+    const { output } = await advisorPrompt(input);
+    if (!output) throw new Error('No se pudo generar el consejo.');
+    return output;
+  }
+);
+
 export async function getNutritionalAdvice(input: AdvisorInput): Promise<AdvisorOutput> {
-  const { output } = await advisorPrompt(input);
-  if (!output) throw new Error('No se pudo generar el consejo.');
-  return output;
+  return advisorFlow(input);
 }
