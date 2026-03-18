@@ -1,0 +1,41 @@
+workflows:
+  ios-release:
+    name: NutriStats iOS Release (Unsigned)
+    max_build_duration: 60
+    instance_type: mac_mini_m1
+    environment:
+      node: latest
+      xcode: latest
+    scripts:
+      - name: Install dependencies
+        script: |
+          npm install
+      - name: Next.js Build and Export
+        script: |
+          npm run build
+      - name: Capacitor Sync
+        script: |
+          npx cap sync ios
+      - name: Build iOS App (No Codesign)
+        script: |
+          # Compilamos el proyecto de Xcode sin firmar
+          xcodebuild build \
+            -workspace ios/App/App.xcworkspace \
+            -scheme App \
+            -configuration Release \
+            -sdk iphoneos \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGN_ING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            PROVISIONING_PROFILE=""
+      - name: Package App as Zip
+        script: |
+          # Buscamos el archivo .app generado y lo zipeamos como hacías en Flutter
+          cd ~/Library/Developer/Xcode/DerivedData
+          # Buscamos la carpeta de build (el nombre varía, así que usamos find)
+          APP_PATH=$(find . -name "App.app" -type d | grep "Release-iphoneos" | head -1)
+          cd "$APP_PATH/.."
+          zip -r NutriStats.app.zip App.app
+          mv NutriStats.app.zip $CM_BUILD_DIR/
+    artifacts:
+      - NutriStats.app.zip
