@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from 'react';
@@ -7,14 +6,14 @@ import { collection, doc, query, where, orderBy, limit, getDocs } from 'firebase
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
-import { ChevronRight, Droplets, Scale, Loader2, BrainCircuit, ChefHat, Plus, Camera, CalendarDays, Trash2, Clock, Sparkles, Flame, Save, Utensils, X, Users } from 'lucide-react';
+import { ChevronRight, Droplets, Scale, Loader2, BrainCircuit, ChefHat, Plus, Camera, CalendarDays, Trash2, Clock, Sparkles, Flame, Save, Utensils, X, Users, Activity } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { UserProfile, MealRecord, Intensity, Friendship } from '@/lib/types';
 import { setDocumentNonBlocking, addDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import type { AdvisorOutput } from '@/ai/flows/nutritional-advisor';
 import type { SuggestMealOutput } from '@/ai/flows/meal-suggestion-flow';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { NotificationCenter } from '@/components/NotificationCenter';
@@ -58,8 +57,6 @@ export default function DashboardPage() {
     if (profile) {
       const today = new Date().toISOString().split('T')[0];
       const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
-      
-      // La racha se mantiene si se registró hoy o ayer
       if (profile.lastLogDate === today || profile.lastLogDate === yesterday) {
         setCurrentStreak(profile.streak || 0);
       } else {
@@ -80,16 +77,14 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!user || !db || !todayDate) return;
-    
     const fetchSocialActivity = async () => {
       setLoadingSocial(true);
       try {
         const friendsSnap = await getDocs(query(
           collection(db, 'users', user.uid, 'friendships'),
           where('status', '==', 'accepted'),
-          limit(10)
+          limit(5)
         ));
-        
         const friendsData = friendsSnap.docs.map(d => d.data() as Friendship);
         const mealsPromises = friendsData.map(async (friend) => {
           const mSnap = await getDocs(query(
@@ -108,16 +103,14 @@ export default function DashboardPage() {
           }
           return null;
         });
-        
         const results = (await Promise.all(mealsPromises)).filter(m => m !== null);
         setFriendMeals(results);
       } catch (e) {
-        console.error("Error loading social feed:", e);
+        console.error("Error social:", e);
       } finally {
         setLoadingSocial(false);
       }
     };
-
     fetchSocialActivity();
   }, [user, db, todayDate]);
 
@@ -125,11 +118,7 @@ export default function DashboardPage() {
     if (profile && profile.targetWeight && profile.objetivo !== 'mantenimiento') {
       const weightDiff = Math.abs(profile.peso - (profile.targetWeight || profile.peso));
       if (weightDiff > 0) {
-        const weeklyRates: Record<Intensity, number> = {
-          saludable: 0.4,
-          moderado: 0.75,
-          intenso: 1.1
-        };
+        const weeklyRates: Record<Intensity, number> = { saludable: 0.4, moderado: 0.75, intenso: 1.1 };
         const rate = weeklyRates[profile.intensity] || 0.5;
         const weeksToGoal = weightDiff / rate;
         const targetDate = new Date();
@@ -139,22 +128,15 @@ export default function DashboardPage() {
           date: format(targetDate, "d 'de' MMMM", { locale: es }),
           isLoss: profile.objetivo === 'perder_grasa'
         });
-      } else {
-        setPrediction(null);
       }
-    } else {
-      setPrediction(null);
     }
   }, [profile]);
 
   if (isUserLoading || !profile) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen space-y-4">
-        <div className="relative">
-          <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full" />
-          <Loader2 className="w-12 h-12 animate-spin text-primary relative z-10" />
-        </div>
-        <p className="text-muted-foreground font-headline animate-pulse text-lg font-bold tracking-tight">Sincronizando...</p>
+        <Loader2 className="w-10 h-10 animate-spin text-primary" />
+        <p className="text-muted-foreground font-headline font-bold animate-pulse">Cargando tu progreso...</p>
       </div>
     );
   }
@@ -180,26 +162,21 @@ export default function DashboardPage() {
   const fetchAdvice = async () => {
     setLoadingAdvice(true);
     try {
-      const payload = {
-        flow: 'advisor',
-        input: {
-          nombre: profile.name || 'Usuario',
-          objetivo: profile.objetivo || 'perder_grasa',
-          peso: profile.peso || 70,
-          consumo: { cal: consumed.cal, prot: consumed.prot, carb: consumed.carb, fat: consumed.fat },
-          metas: { cal: profile.calorieGoal || 2000, prot: profile.proteinGoalGrams || 150, carb: profile.carbohydrateGoalGrams || 200, fat: profile.fatGoalGrams || 60 }
-        }
-      };
-
       const res = await fetch(getApiUrl('/api/ai'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          flow: 'advisor',
+          input: {
+            nombre: profile.name,
+            objetivo: profile.objetivo,
+            peso: profile.peso,
+            consumo: consumed,
+            metas: { cal: profile.calorieGoal, prot: profile.proteinGoalGrams, carb: profile.carbohydrateGoalGrams, fat: profile.fatGoalGrams }
+          }
+        }),
       });
-
-      if (!res.ok) throw new Error('AI service error');
-
-      const data: AdvisorOutput = await res.json();
+      const data = await res.json();
       setAdvice(data);
     } catch (e) { console.error(e); } finally { setLoadingAdvice(false); }
   };
@@ -207,25 +184,12 @@ export default function DashboardPage() {
   const fetchMealSuggestion = async () => {
     setLoadingSuggestion(true);
     try {
-      const payload = {
-        flow: 'suggest',
-        input: {
-          remainingCal: remaining.cal,
-          remainingProt: remaining.prot,
-          remainingCarb: remaining.carb,
-          remainingFat: remaining.fat
-        }
-      };
-
       const res = await fetch(getApiUrl('/api/ai'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ flow: 'suggest', input: { ...remaining, preferencias: "" } }),
       });
-
-      if (!res.ok) throw new Error('AI service error');
-
-      const data: SuggestMealOutput = await res.json();
+      const data = await res.json();
       setMealSuggestion(data);
     } catch (e) { console.error(e); } finally { setLoadingSuggestion(false); }
   };
@@ -234,27 +198,23 @@ export default function DashboardPage() {
     if (!user || !mealSuggestion) return;
     setSavingFavorite(true);
     addDocumentNonBlocking(collection(db, 'users', user.uid, 'favoriteRecipes'), {
+      ...mealSuggestion,
       userId: user.uid,
-      nombrePlato: mealSuggestion.nombrePlato,
-      descripcion: mealSuggestion.descripcion,
-      ingredientes: mealSuggestion.ingredientes,
-      instrucciones: mealSuggestion.instrucciones,
       macros: mealSuggestion.macrosEstimados,
       createdAt: new Date().toISOString()
     }).then(() => {
       setSavingFavorite(false);
       setMealSuggestion(null);
-      toast({ title: "¡Receta guardada!", description: "La encontrarás en Favoritos." });
+      toast({ title: "¡Receta guardada!" });
     });
   };
 
   const handleAddWater = () => {
     if (!user || !todayDate) return;
-    const newWater = waterConsumed + 250;
     setDocumentNonBlocking(doc(db, 'users', user.uid, 'dailySummaries', todayDate), {
       userId: user.uid,
       summaryDate: todayDate,
-      waterIntakeMl: newWater,
+      waterIntakeMl: waterConsumed + 250,
       updatedAt: new Date().toISOString()
     }, { merge: true });
   };
@@ -273,336 +233,200 @@ export default function DashboardPage() {
     toast({ title: "Peso actualizado" });
   };
 
-  const handleDeleteMeal = async (mealId: string) => {
-    if (!user) return;
-    deleteDocumentNonBlocking(doc(db, 'users', user.uid, 'mealLogs', mealId));
-    setSelectedMeal(null);
-    toast({ title: "Registro eliminado" });
-  };
-
   return (
-    <div className="min-h-screen bg-transparent pb-48">
-      <main className="max-w-2xl mx-auto px-6 pt-10 space-y-8">
+    <div className="min-h-screen safe-area-pt safe-area-pb pb-32">
+      <main className="max-w-xl mx-auto px-5 pt-8 space-y-8">
+        {/* Header Elegante */}
         <header className="flex justify-between items-start">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <p className="text-primary font-bold text-sm tracking-wider uppercase opacity-80">
-                {greeting}, {profile.name}
-              </p>
+              <span className="text-primary font-bold text-xs uppercase tracking-[0.2em]">{greeting}, {profile.name.split(' ')[0]}</span>
               {currentStreak > 0 && (
-                <div className="flex items-center gap-1 bg-orange-500/10 text-orange-500 px-2 py-0.5 rounded-full text-[10px] font-bold animate-pulse">
-                  <Flame className="w-3 h-3 fill-orange-500" /> Racha: {currentStreak}
+                <div className="flex items-center gap-1 bg-orange-500/10 text-orange-500 px-2 py-0.5 rounded-full text-[10px] font-bold">
+                  <Flame className="w-3 h-3 fill-orange-500" /> {currentStreak}
                 </div>
               )}
             </div>
-            <h1 className="text-4xl font-headline font-bold text-foreground drop-shadow-sm">NutriScan</h1>
+            <h1 className="text-4xl font-headline font-bold text-foreground tracking-tight">Tu Progreso</h1>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2.5">
             <NotificationCenter />
-            <Button size="icon" variant="secondary" className="rounded-2xl glass ios-btn" onClick={fetchAdvice}>
+            <Button size="icon" variant="secondary" className="glass rounded-2xl ios-btn" onClick={fetchAdvice}>
               <BrainCircuit className={cn("w-5 h-5 text-accent", loadingAdvice && "animate-spin")} />
             </Button>
-            <Button size="icon" variant="secondary" className="rounded-2xl glass ios-btn" onClick={fetchMealSuggestion}>
+            <Button size="icon" variant="secondary" className="glass rounded-2xl ios-btn" onClick={fetchMealSuggestion}>
               <ChefHat className={cn("w-5 h-5 text-primary", loadingSuggestion && "animate-spin")} />
             </Button>
           </div>
         </header>
 
-        <Link href="/registrar" className="block animate-float">
-          <Button className="w-full h-24 rounded-[3rem] bg-primary hover:bg-primary/90 text-white font-bold text-2xl shadow-2xl shadow-primary/30 flex items-center justify-center gap-4 group ios-btn">
-            <div className="w-14 h-14 bg-white/20 rounded-[1.5rem] flex items-center justify-center group-hover:scale-110 transition-transform backdrop-blur-md">
-              <Camera className="w-8 h-8" />
+        {/* Botón Principal de Acción */}
+        <Link href="/registrar" className="block">
+          <Button className="w-full h-20 rounded-[2.5rem] bg-primary hover:bg-primary/90 text-white font-bold text-xl shadow-xl shadow-primary/25 flex items-center justify-center gap-4 ios-btn transition-all group">
+            <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center group-hover:scale-105 transition-transform backdrop-blur-md">
+              <Camera className="w-7 h-7" />
             </div>
             Escanear Comida
-            <Plus className="w-8 h-8 ml-auto opacity-50" />
+            <Plus className="w-6 h-6 ml-auto opacity-40" />
           </Button>
         </Link>
 
-        {friendMeals.length > 0 && (
-          <section className="space-y-4">
-             <div className="flex justify-between items-center px-2">
-               <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                 <Users className="w-3 h-3 text-primary" /> Pulso de la Comunidad
-               </h3>
-               <Link href="/amigos" className="text-[10px] font-bold text-primary hover:underline uppercase tracking-wider">Ver todos</Link>
+        {/* Tarjeta de Calorías Premium */}
+        <Card className="glass rounded-[3rem] overflow-hidden border-white/20 shadow-2xl relative">
+          <div className="absolute top-8 right-8">
+            <div className="w-16 h-16 rounded-full border-4 border-secondary/30 flex items-center justify-center relative">
+               <div className="absolute inset-0 rounded-full border-4 border-primary transition-all duration-1000" style={{ clipPath: `inset(${100-calPct}% 0 0 0)` }} />
+               <span className="text-sm font-bold">{calPct.toFixed(0)}%</span>
             </div>
-            <Card className="glass rounded-[2.5rem] overflow-hidden border-white/10 shadow-xl">
-              <CardContent className="p-4 space-y-4">
-                {friendMeals.map((m) => (
-                  <Link key={m.id} href={`/amigos`} className="flex items-center gap-4 p-3 hover:bg-white/5 rounded-2xl transition-all ios-btn group">
-                    <div className="w-12 h-12 rounded-xl bg-secondary/50 overflow-hidden relative shrink-0">
-                      {m.photoDataUri ? (
-                        <img src={m.photoDataUri} alt={m.friendName} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-primary font-bold">{m.friendName[0]}</div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex justify-between items-start">
-                        <p className="font-bold text-sm truncate">{m.friendName}</p>
-                        <span className="text-[9px] font-bold text-muted-foreground opacity-50">Hoy</span>
-                      </div>
-                      <p className="text-xs text-muted-foreground truncate">{m.mealType}</p>
-                    </div>
-                    <div className="flex items-center gap-1 bg-orange-500/10 px-2 py-1 rounded-full">
-                        <Flame className="w-3 h-3 text-orange-500 fill-orange-500" />
-                        <span className="text-[10px] font-bold text-orange-500">{m.totalCalories}</span>
-                    </div>
-                  </Link>
-                ))}
-              </CardContent>
-            </Card>
-          </section>
-        )}
-
-        {prediction && (
-          <Card className="glass rounded-[2.5rem] overflow-hidden relative group border-primary/20">
-            <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-accent/10 opacity-50" />
-            <CardContent className="p-6 relative flex items-center gap-6">
-              <div className="w-16 h-16 rounded-[1.5rem] bg-primary/20 flex items-center justify-center shadow-inner">
-                <CalendarDays className="w-8 h-8 text-primary" />
-              </div>
-              <div className="space-y-1">
-                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground opacity-70">Meta: {profile.targetWeight}kg ({profile.intensity})</p>
-                <p className="text-xl font-bold leading-tight">Llegarás el <span className="text-primary drop-shadow-[0_0_8px_rgba(59,130,246,0.3)]">{prediction.date}</span></p>
-                <p className="text-xs font-medium text-muted-foreground">Faltan {prediction.weeks} semanas al ritmo actual.</p>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        <Card className="glass rounded-[3rem] overflow-hidden border-white/20 relative shadow-2xl">
-          <div className="absolute top-0 right-0 p-8">
-             <div className="w-20 h-20 rounded-full border-4 border-secondary/30 flex items-center justify-center relative">
-                <div className="absolute inset-0 rounded-full border-4 border-primary transition-all duration-1000" style={{ clipPath: `inset(${100-calPct}% 0 0 0)` }} />
-                <span className="text-lg font-bold">{calPct.toFixed(0)}%</span>
-             </div>
           </div>
-          <CardContent className="p-10 space-y-8">
+          <CardContent className="p-8 space-y-8">
             <div className="space-y-1">
-              <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-muted-foreground">Calorías Totales</span>
+              <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-muted-foreground">Kcal Hoy</p>
               <div className="flex items-baseline gap-2">
-                <span className="text-7xl font-headline font-bold text-foreground tracking-tighter">{consumed.cal}</span>
-                <span className="text-xl text-muted-foreground font-medium opacity-60">/ {profile.calorieGoal}</span>
+                <span className="text-6xl font-headline font-bold text-foreground tracking-tighter">{consumed.cal}</span>
+                <span className="text-lg text-muted-foreground font-medium opacity-50">/ {profile.calorieGoal}</span>
               </div>
             </div>
-            
-            <div className="grid grid-cols-1 gap-6 pt-6 border-t border-white/10">
-              <MacroCol label="Proteínas" value={consumed.prot} target={profile.proteinGoalGrams} unit="g" color="bg-primary" />
-              <MacroCol label="Carbohidratos" value={consumed.carb} target={profile.carbohydrateGoalGrams} unit="g" color="bg-accent" />
-              <MacroCol label="Grasas" value={consumed.fat} target={profile.fatGoalGrams} unit="g" color="bg-orange-500" />
+            <div className="grid grid-cols-1 gap-5 pt-4 border-t border-white/5">
+              <MacroBar label="Proteínas" value={consumed.prot} target={profile.proteinGoalGrams} color="bg-primary" />
+              <MacroBar label="Carbohidratos" value={consumed.carb} target={profile.carbohydrateGoalGrams} color="bg-accent" />
+              <MacroBar label="Grasas" value={consumed.fat} target={profile.fatGoalGrams} color="bg-orange-500" />
             </div>
           </CardContent>
         </Card>
 
-        <div className="grid grid-cols-2 gap-6">
-          <Card className="glass rounded-[2.5rem] p-8 space-y-4 border-white/10 shadow-xl relative overflow-hidden group">
-            <div className="absolute -top-4 -right-4 w-16 h-16 bg-blue-500/10 rounded-full blur-2xl group-hover:scale-150 transition-transform" />
-            <Droplets className="w-8 h-8 text-blue-400 drop-shadow-[0_0_8px_rgba(96,165,250,0.5)]" />
-            <div>
-              <p className="text-3xl font-headline font-bold">{waterConsumed} <span className="text-xs font-medium opacity-50">ml</span></p>
-              <div className="h-1.5 w-full bg-secondary/30 rounded-full mt-3 overflow-hidden">
-                <div className="h-full bg-blue-500 transition-all duration-700" style={{ width: `${waterPct}%` }} />
-              </div>
+        {/* Orbes de Agua y Peso */}
+        <div className="grid grid-cols-2 gap-5">
+          <Card className="glass rounded-[2.5rem] p-6 space-y-4 border-white/10 shadow-lg group ios-btn" onClick={handleAddWater}>
+            <div className="flex justify-between items-center">
+              <Droplets className="w-6 h-6 text-blue-400" />
+              <span className="text-[10px] font-bold text-blue-400 uppercase tracking-widest">{waterPct.toFixed(0)}%</span>
             </div>
-            <Button size="sm" onClick={handleAddWater} className="w-full bg-blue-500/15 hover:bg-blue-500/25 text-blue-400 rounded-2xl font-bold h-10 ios-btn">+ 250ml</Button>
+            <div>
+              <p className="text-2xl font-headline font-bold">{waterConsumed} <span className="text-[10px] opacity-50 uppercase">ml</span></p>
+              <Progress value={waterPct} className="h-1.5 mt-2 bg-blue-500/10" />
+            </div>
           </Card>
 
-          <Card className="glass rounded-[2.5rem] p-8 space-y-4 border-white/10 shadow-xl relative overflow-hidden group">
-            <div className="absolute -top-4 -right-4 w-16 h-16 bg-orange-500/10 rounded-full blur-2xl group-hover:scale-150 transition-transform" />
-            <Scale className="w-8 h-8 text-orange-400 drop-shadow-[0_0_8px_rgba(251,146,60,0.5)]" />
-            <div>
-              <p className="text-3xl font-headline font-bold">{profile.peso} <span className="text-xs font-medium opacity-50">kg</span></p>
-              <p className="text-[9px] text-muted-foreground mt-3 font-bold uppercase tracking-widest">Objetivo: {profile.targetWeight}kg</p>
-            </div>
-            <Dialog open={weightDialogOpen} onOpenChange={setWeightDialogOpen}>
-              <DialogTrigger asChild>
-                <Button size="sm" variant="outline" className="w-full rounded-2xl glass border-white/10 font-bold h-10 ios-btn">Actualizar</Button>
-              </DialogTrigger>
-              <DialogContent className="glass border-none rounded-[2.5rem]">
-                <DialogHeader>
-                  <DialogTitle className="sr-only">Actualizar Peso</DialogTitle>
-                  <p className="text-xl font-bold text-center">Nuevo Peso</p>
-                </DialogHeader>
-                <div className="space-y-6 pt-4">
-                  <Input type="number" placeholder="Ej. 75.5" className="glass h-14 rounded-2xl text-center text-2xl font-bold" value={newWeight} onChange={e => setNewWeight(e.target.value)} />
-                  <Button className="w-full bg-primary h-14 font-bold rounded-2xl shadow-xl shadow-primary/20 ios-btn" onClick={handleLogWeight}>Guardar</Button>
+          <Dialog open={weightDialogOpen} onOpenChange={setWeightDialogOpen}>
+            <DialogTrigger asChild>
+              <Card className="glass rounded-[2.5rem] p-6 space-y-4 border-white/10 shadow-lg group ios-btn">
+                <div className="flex justify-between items-center">
+                  <Scale className="w-6 h-6 text-orange-400" />
+                  <Plus className="w-4 h-4 text-muted-foreground opacity-40" />
                 </div>
-              </DialogContent>
-            </Dialog>
-          </Card>
+                <div>
+                  <p className="text-2xl font-headline font-bold">{profile.peso} <span className="text-[10px] opacity-50 uppercase">kg</span></p>
+                  <p className="text-[9px] text-muted-foreground mt-2 uppercase font-bold tracking-widest">Objetivo: {profile.targetWeight}kg</p>
+                </div>
+              </Card>
+            </DialogTrigger>
+            <DialogContent className="glass border-none rounded-[2.5rem] max-w-xs">
+              <DialogHeader><DialogTitle className="text-center font-bold">Nuevo Peso</DialogTitle></DialogHeader>
+              <div className="space-y-6 pt-4">
+                <Input type="number" placeholder="Ej. 75.5" className="glass h-14 rounded-2xl text-center text-2xl font-bold" value={newWeight} onChange={e => setNewWeight(e.target.value)} />
+                <Button className="w-full bg-primary h-14 font-bold rounded-2xl ios-btn" onClick={handleLogWeight}>Actualizar</Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
 
-        <section className="space-y-6">
-          <div className="flex justify-between items-center px-2">
-            <h3 className="text-2xl font-headline font-bold flex items-center gap-3">
-              <Utensils className="w-6 h-6 text-primary" /> Diario de Hoy
+        {/* Pulso Social Integrado */}
+        {friendMeals.length > 0 && (
+          <section className="space-y-4">
+            <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground px-2 flex items-center gap-2">
+              <Users className="w-3.5 h-3.5 text-primary" /> Pulso de la Comunidad
             </h3>
-            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{meals?.length || 0} Registros</span>
+            <div className="space-y-3">
+              {friendMeals.map((m) => (
+                <Link key={m.id} href="/amigos" className="glass p-3 rounded-3xl flex items-center gap-4 ios-btn hover:bg-white/5 transition-colors border-white/5">
+                  <div className="w-12 h-12 rounded-2xl bg-secondary/50 overflow-hidden shrink-0 border border-white/5">
+                    {m.photoDataUri ? <img src={m.photoDataUri} className="w-full h-full object-cover" alt="" /> : <div className="w-full h-full flex items-center justify-center font-bold">{m.friendName[0]}</div>}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold truncate">{m.friendName}</p>
+                    <p className="text-[10px] text-muted-foreground truncate">{m.mealType}</p>
+                  </div>
+                  <div className="bg-orange-500/10 px-3 py-1 rounded-full flex items-center gap-1.5">
+                    <Flame className="w-3 h-3 text-orange-500 fill-orange-500" />
+                    <span className="text-[10px] font-bold text-orange-500">{m.totalCalories}</span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Diario de Comidas con Mejor Jerarquía */}
+        <section className="space-y-4 pb-12">
+          <div className="flex justify-between items-center px-2">
+            <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">Registros de Hoy</h3>
+            <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">{meals?.length || 0} platos</span>
           </div>
           <div className="space-y-4">
             {meals?.length === 0 ? (
-              <div className="py-24 text-center glass rounded-[3rem] border-dashed border-white/20 opacity-50 flex flex-col items-center gap-4">
-                <Camera className="w-12 h-12 text-muted-foreground opacity-20" />
-                <p className="text-muted-foreground font-medium">Aún no hay registros hoy.</p>
+              <div className="py-16 text-center glass rounded-[3rem] border-dashed border-white/20 opacity-40">
+                <Utensils className="w-10 h-10 mx-auto mb-3 opacity-20" />
+                <p className="text-sm font-medium">No has comido nada hoy...</p>
               </div>
             ) : (
               meals?.map(meal => (
-                <div 
-                  key={meal.id} 
-                  className="glass p-5 rounded-[2.5rem] flex items-center gap-5 hover:bg-white/10 transition-all cursor-pointer border-white/10 group ios-btn shadow-lg"
-                  onClick={() => setSelectedMeal(meal)}
-                >
-                  <div className="w-24 h-24 rounded-[1.8rem] bg-secondary/30 overflow-hidden shrink-0 border border-white/10 relative">
-                    {meal.photoDataUri ? (
-                      <img src={meal.photoDataUri} alt={meal.mealType} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center opacity-20"><Utensils className="w-8 h-8" /></div>
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+                <div key={meal.id} className="glass p-4 rounded-[2rem] flex items-center gap-4 ios-btn hover:bg-white/5 transition-all border-white/5" onClick={() => setSelectedMeal(meal)}>
+                  <div className="w-20 h-20 rounded-[1.5rem] bg-secondary/30 overflow-hidden shrink-0 relative border border-white/5">
+                    {meal.photoDataUri ? <img src={meal.photoDataUri} className="w-full h-full object-cover" alt="" /> : <Utensils className="w-8 h-8 m-auto absolute inset-0 opacity-20" />}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-bold text-foreground truncate text-xl tracking-tight">{meal.mealType}</h4>
-                    <div className="flex flex-wrap gap-3 mt-2">
-                      <div className="px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider">{meal.totalCalories} kcal</div>
-                      <div className="px-3 py-1 rounded-full bg-accent/10 text-accent text-[10px] font-bold uppercase tracking-wider">P: {meal.totalProteins}g</div>
-                      <div className="px-3 py-1 rounded-full bg-white/5 text-muted-foreground text-[10px] font-bold uppercase flex items-center gap-1">
+                    <h4 className="font-bold text-foreground truncate text-lg">{meal.mealType}</h4>
+                    <div className="flex gap-3 mt-1.5">
+                      <span className="text-[10px] font-bold text-primary">{meal.totalCalories} kcal</span>
+                      <span className="text-[10px] font-bold text-muted-foreground uppercase opacity-50 flex items-center gap-1">
                         <Clock className="w-3 h-3" /> {new Date(meal.logDateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </div>
+                      </span>
                     </div>
                   </div>
-                  <ChevronRight className="w-6 h-6 text-muted-foreground opacity-30 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+                  <ChevronRight className="w-5 h-5 text-muted-foreground opacity-30" />
                 </div>
               ))
             )}
           </div>
         </section>
 
-        {/* Modal de Carga de IA */}
-        <Dialog open={loadingSuggestion || loadingAdvice} onOpenChange={() => {}}>
-          <DialogContent className="glass border-none max-w-xs p-10 rounded-[3rem] flex flex-col items-center justify-center text-center space-y-6 outline-none">
-            <div className="relative">
+        {/* Modales de IA con UI Mejorada */}
+        <Dialog open={loadingSuggestion || loadingAdvice}>
+          <DialogContent className="glass border-none max-w-[280px] p-10 rounded-[3rem] flex flex-col items-center justify-center text-center outline-none">
+            <div className="relative mb-6">
               <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full animate-pulse" />
-              <Loader2 className="w-16 h-16 animate-spin text-primary relative z-10" />
+              <Loader2 className="w-12 h-12 animate-spin text-primary relative z-10" />
             </div>
-            <div className="space-y-2">
-              <h3 className="text-xl font-headline font-bold">Consultando a la IA</h3>
-              <p className="text-sm text-muted-foreground font-medium px-4 leading-relaxed">
-                {loadingSuggestion ? "Diseñando tu receta táctica perfecta..." : "Analizando tus macros y progreso..."}
-              </p>
-            </div>
+            <h3 className="text-xl font-headline font-bold">Consultando IA</h3>
+            <p className="text-xs text-muted-foreground mt-2 font-medium">Sincronizando con tus biometría...</p>
           </DialogContent>
         </Dialog>
 
-        <Dialog open={!!advice} onOpenChange={() => setAdvice(null)}>
-          <DialogContent className="glass border-none max-w-md p-10 rounded-[3rem]">
-            <DialogHeader className="sr-only"><DialogTitle>Consejo IA</DialogTitle></DialogHeader>
-            <div className="flex flex-col items-center text-center space-y-6">
-              <div className="w-20 h-20 rounded-[1.8rem] bg-accent/20 flex items-center justify-center shadow-xl shadow-accent/20 animate-float">
-                <BrainCircuit className="w-10 h-10 text-accent" />
-              </div>
-              <div className="space-y-2">
-                <h2 className="text-3xl font-headline font-bold">Feedback del Coach</h2>
-                <div className={cn(
-                  "inline-block px-4 py-1.5 rounded-full font-bold text-[10px] uppercase tracking-widest",
-                  advice?.estado === 'excelente' ? "bg-emerald-500/20 text-emerald-400" :
-                  advice?.estado === 'en_progreso' ? "bg-primary/20 text-primary" : "bg-orange-500/20 text-orange-400"
-                )}>
-                  {advice?.estado.replace('_', ' ')}
-                </div>
-              </div>
-              <p className="text-lg leading-relaxed text-foreground/80 font-medium">{advice?.consejo}</p>
-              <div className="w-full bg-secondary/30 p-6 rounded-[2rem] space-y-2 border border-white/5">
-                <p className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest">Recomendación Clave</p>
-                <p className="font-bold text-accent text-xl">{advice?.sugerenciaComida}</p>
-              </div>
-              <Button className="w-full h-16 rounded-[1.8rem] text-lg font-bold bg-primary ios-btn shadow-2xl shadow-primary/20" onClick={() => setAdvice(null)}>Recibido</Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        <Dialog open={!!mealSuggestion} onOpenChange={() => setMealSuggestion(null)}>
-          <DialogContent className="glass border-none max-w-lg max-h-[90vh] overflow-y-auto p-0 rounded-[3rem] gap-0">
-            <DialogHeader className="p-10 bg-gradient-to-br from-primary/10 to-transparent">
-              <div className="flex justify-between items-center w-full">
-                <div className="w-16 h-16 rounded-[1.5rem] bg-primary/20 flex items-center justify-center shadow-lg">
-                   <ChefHat className="w-10 h-10 text-primary" />
-                </div>
-                <div className="flex gap-2">
-                  <NutrientBadge label="Cal" value={mealSuggestion?.macrosEstimados.cal || 0} unit="" color="text-primary" />
-                  <NutrientBadge label="P" value={mealSuggestion?.macrosEstimados.prot || 0} unit="g" color="text-accent" />
-                </div>
-              </div>
-              <DialogTitle className="mt-6 text-4xl font-headline font-bold text-foreground leading-tight">{mealSuggestion?.nombrePlato}</DialogTitle>
-              <p className="text-muted-foreground mt-4 leading-relaxed text-lg italic opacity-80">"{mealSuggestion?.descripcion}"</p>
-            </DialogHeader>
-            <div className="p-10 space-y-10">
-              <div className="space-y-5">
-                <h4 className="text-xs font-bold uppercase tracking-[0.3em] text-primary flex items-center gap-3">
-                  <Utensils className="w-4 h-4" /> Ingredientes Seleccionados
-                </h4>
-                <div className="grid grid-cols-1 gap-3">
-                  {mealSuggestion?.ingredientes.map((ing, i) => (
-                    <div key={i} className="flex items-center gap-4 glass p-4 rounded-2xl border-white/5">
-                      <div className="w-2 h-2 rounded-full bg-primary" />
-                      <span className="text-sm font-medium">{ing}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex gap-4 pt-4">
-                <Button variant="outline" className="flex-1 h-16 rounded-2xl glass font-bold ios-btn" onClick={() => setMealSuggestion(null)}>Quizá luego</Button>
-                <Button 
-                  className="flex-[2] h-16 rounded-2xl bg-primary hover:bg-primary/90 font-bold gap-3 shadow-2xl shadow-primary/30 ios-btn text-lg"
-                  onClick={handleSaveFavorite}
-                  disabled={savingFavorite}
-                >
-                  {savingFavorite ? <Loader2 className="animate-spin" /> : <Save className="w-6 h-6" />}
-                  Guardar Receta
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-
+        {/* Modal de Detalle de Comida */}
         {selectedMeal && (
           <Dialog open={!!selectedMeal} onOpenChange={() => setSelectedMeal(null)}>
-            <DialogContent className="glass border-none p-0 overflow-hidden sm:max-w-md max-h-[90vh] rounded-[3rem] shadow-[0_50px_100px_rgba(0,0,0,0.6)]">
-              <DialogHeader className="sr-only">
-                <DialogTitle>{selectedMeal.mealType}</DialogTitle>
-              </DialogHeader>
-              <div className="relative aspect-square w-full bg-secondary/50">
-                {selectedMeal.photoDataUri ? (
-                  <img src={selectedMeal.photoDataUri} alt={selectedMeal.mealType} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center opacity-20">
-                    <Utensils className="w-16 h-16" />
-                  </div>
-                )}
-                <div className="absolute top-6 left-6 right-6 flex justify-between">
-                   <div className="glass px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-2">
-                     <Clock className="w-3 h-3" /> {new Date(selectedMeal.logDateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                   </div>
-                   <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="glass bg-destructive/20 text-destructive hover:bg-destructive h-12 w-12 rounded-[1.2rem] ios-btn"
-                    onClick={() => handleDeleteMeal(selectedMeal.id)}
-                  >
-                    <Trash2 className="w-6 h-6" />
-                  </Button>
-                </div>
+            <DialogContent className="glass border-none p-0 overflow-hidden sm:max-w-md rounded-[3rem] shadow-2xl">
+              <div className="relative aspect-video w-full bg-secondary/50">
+                {selectedMeal.photoDataUri ? <img src={selectedMeal.photoDataUri} className="w-full h-full object-cover" alt="" /> : <Utensils className="w-12 h-12 absolute inset-0 m-auto opacity-10" />}
+                <DialogClose className="absolute top-6 right-6 h-10 w-10 glass rounded-full flex items-center justify-center ios-btn">
+                  <X className="w-5 h-5" />
+                </DialogClose>
               </div>
-              
-              <div className="p-10 space-y-8">
-                <h2 className="text-4xl font-headline font-bold text-foreground tracking-tight">{selectedMeal.mealType}</h2>
-                <div className="grid grid-cols-2 gap-4">
-                  <NutrientBox label="Calorías" value={selectedMeal.totalCalories} unit="kcal" color="text-primary" />
-                  <NutrientBox label="Proteínas" value={selectedMeal.totalProteins} unit="g" color="text-accent" />
-                  <NutrientBox label="Carbohidratos" value={selectedMeal.totalCarbohydrates} unit="g" color="text-orange-500" />
-                  <NutrientBox label="Grasas" value={selectedMeal.totalFats} unit="g" color="text-emerald-500" />
+              <div className="p-8 space-y-8">
+                <div>
+                  <h2 className="text-3xl font-headline font-bold">{selectedMeal.mealType}</h2>
+                  <p className="text-xs text-muted-foreground mt-1 font-medium">{new Date(selectedMeal.logDateTime).toLocaleString()}</p>
                 </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <NutrientStat label="Calorías" value={selectedMeal.totalCalories} unit="kcal" color="text-primary" />
+                  <NutrientStat label="Proteínas" value={selectedMeal.totalProteins} unit="g" color="text-accent" />
+                  <NutrientStat label="Carbos" value={selectedMeal.totalCarbohydrates} unit="g" color="text-orange-500" />
+                  <NutrientStat label="Grasas" value={selectedMeal.totalFats} unit="g" color="text-emerald-500" />
+                </div>
+                <Button variant="ghost" className="w-full text-destructive hover:bg-destructive/10 rounded-2xl h-14 font-bold ios-btn" onClick={() => { deleteDocumentNonBlocking(doc(db, 'users', user.uid, 'mealLogs', selectedMeal.id)); setSelectedMeal(null); }}>
+                  <Trash2 className="w-4 h-4 mr-2" /> Eliminar Registro
+                </Button>
               </div>
             </DialogContent>
           </Dialog>
@@ -612,40 +436,26 @@ export default function DashboardPage() {
   );
 }
 
-function MacroCol({ label, value, target, unit, color }: any) {
+function MacroBar({ label, value, target, color }: any) {
   const pct = Math.min((value / target) * 100, 100);
   return (
-    <div className="space-y-3">
-      <div className="flex justify-between text-[11px] font-bold uppercase tracking-[0.2em] text-foreground px-1">
-        <span className="opacity-70">{label}</span>
-        <span className="opacity-100">{value}{unit} <span className="text-muted-foreground opacity-40">/ {target}{unit}</span></span>
+    <div className="space-y-2">
+      <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+        <span>{label}</span>
+        <span className="text-foreground">{value}g <span className="opacity-40">/ {target}g</span></span>
       </div>
-      <div className="h-4 w-full bg-secondary/20 rounded-full overflow-hidden border border-white/5 shadow-inner">
-        <div 
-          className={cn("h-full transition-all duration-1000 relative", color)} 
-          style={{ width: `${pct}%` }} 
-        >
-          <div className="absolute inset-0 bg-white/20 animate-pulse" />
-        </div>
+      <div className="h-3 w-full bg-secondary/20 rounded-full overflow-hidden border border-white/5">
+        <div className={cn("h-full transition-all duration-1000", color)} style={{ width: `${pct}%` }} />
       </div>
     </div>
   );
 }
 
-function NutrientBox({ label, value, unit, color }: { label: string, value: number, unit: string, color: string }) {
+function NutrientStat({ label, value, unit, color }: any) {
   return (
-    <div className="glass bg-white/5 p-6 rounded-[2rem] border-white/5 flex flex-col items-center justify-center text-center">
-      <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-[0.3em] mb-2">{label}</p>
-      <p className={`text-3xl font-bold ${color} tracking-tighter`}>{value}<span className="text-sm font-medium opacity-50 ml-1">{unit}</span></p>
-    </div>
-  );
-}
-
-function NutrientBadge({ label, value, unit, color }: { label: string, value: number, unit: string, color: string }) {
-  return (
-    <div className="glass px-4 py-2 rounded-2xl border-white/10 flex items-center gap-2">
-      <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">{label}:</span>
-      <span className={cn("text-sm font-bold", color)}>{value}{unit}</span>
+    <div className="bg-white/5 p-5 rounded-[1.8rem] border border-white/5 text-center">
+      <p className="text-[9px] text-muted-foreground uppercase font-bold tracking-widest mb-1">{label}</p>
+      <p className={cn("text-2xl font-bold tracking-tighter", color)}>{value}<span className="text-[10px] font-medium opacity-50 ml-0.5">{unit}</span></p>
     </div>
   );
 }
