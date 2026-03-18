@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
@@ -90,7 +91,7 @@ export function NotificationCenter() {
           )}
         </Button>
       </SheetTrigger>
-      <SheetContent className="glass border-l border-border/50 sm:max-w-md">
+      <SheetContent className="glass border-l border-border/50 sm:max-w-md [&>button]:hidden">
         <SheetHeader className="flex flex-col pb-6 space-y-4">
           <div className="flex items-center justify-between w-full">
             <SheetTitle className="text-2xl font-headline font-bold">Notificaciones</SheetTitle>
