@@ -27,7 +27,7 @@ const proxy: any = new Proxy(noop, handler);
 
 // --- Exportaciones Nombradas para Análisis Estático (Turbopack) ---
 
-// http / https / http2 / net / tls / dns
+// http / https / http2 / net / tls / dns / url
 export const Agent = proxy;
 export const get = proxy;
 export const request = proxy;
@@ -42,6 +42,13 @@ export const lookup = proxy;
 export const resolve4 = proxy;
 export const resolve6 = proxy;
 export const TLSSocket = proxy;
+export const URL = typeof window !== 'undefined' ? window.URL : proxy;
+export const URLSearchParams = typeof window !== 'undefined' ? window.URLSearchParams : proxy;
+export const domainToASCII = proxy;
+export const domainToUnicode = proxy;
+export const fileURLToPath = proxy;
+export const pathToFileURL = proxy;
+export const urlToHttpOptions = proxy;
 
 // Constantes de red comunes
 export const HTTP2_HEADER_AUTHORITY = ':authority';
@@ -79,7 +86,7 @@ export const relative = proxy;
 export const isAbsolute = proxy;
 export const normalize = proxy;
 export const parse = proxy;
-export const format_path = proxy; 
+export const format = proxy; 
 export const sep = '/';
 export const delimiter = ':';
 
@@ -88,7 +95,6 @@ export const inspect = proxy;
 export const inherits = proxy;
 export const promisify = (fn: any) => fn || proxy;
 export const deprecate = (fn: any) => fn;
-export const format = proxy;
 export const debuglog = proxy;
 export const types = proxy;
 
@@ -169,5 +175,13 @@ export const stderr = { isTTY: false, write: proxy, on: proxy };
 export const stdin = { isTTY: false, read: proxy, on: proxy };
 export const pid = 1;
 export const cwd = () => '/';
+
+// timers
+export const setTimeout = (fn: Function, ms: number) => globalThis.setTimeout(fn, ms);
+export const clearTimeout = (id: any) => globalThis.clearTimeout(id);
+export const setInterval = (fn: Function, ms: number) => globalThis.setInterval(fn, ms);
+export const clearInterval = (id: any) => globalThis.clearInterval(id);
+export const setImmediate = (fn: Function) => globalThis.setTimeout(fn, 0);
+export const clearImmediate = (id: any) => globalThis.clearTimeout(id);
 
 export default proxy;
