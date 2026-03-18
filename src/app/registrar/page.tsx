@@ -1,9 +1,8 @@
-
 "use client";
 
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { useUser, useFirestore, addDocumentNonBlocking, useDoc, useMemoFirebase } from '@/firebase';
+import { useUser, useFirestore, addDocumentNonBlocking, useMemoFirebase } from '@/firebase';
 import { collection, doc, updateDoc, getDoc } from 'firebase/firestore';
 import { BottomNav } from '@/components/Navigation';
 import { Button } from '@/components/ui/button';
@@ -34,16 +33,57 @@ export default function RegistrarPage() {
 
   const userDocRef = useMemoFirebase(() => user ? doc(db, 'users', user.uid) : null, [db, user]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
+  // Función para redimensionar la imagen antes de procesarla para evitar crashes de memoria
+  const resizeImage = (file: File): Promise<string> => {
+    return new Promise((resolve) => {
       const reader = new FileReader();
-      reader.onloadend = () => {
-        const dataUri = reader.result as string;
-        setPhoto(dataUri);
-        runAnalysis(dataUri);
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 1024;
+          const MAX_HEIGHT = 1024;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', 0.8));
+        };
+        img.src = e.target?.result as string;
       };
       reader.readAsDataURL(file);
+    });
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setAnalyzing(true);
+      setError(null);
+      try {
+        const optimizedDataUri = await resizeImage(file);
+        setPhoto(optimizedDataUri);
+        await runAnalysis(optimizedDataUri);
+      } catch (err) {
+        console.error("Error optimizando imagen:", err);
+        setError("Error al procesar la imagen. Intenta con otra.");
+        setAnalyzing(false);
+      }
     }
   };
 
@@ -87,7 +127,6 @@ export default function RegistrarPage() {
 
     setSaving(true);
     try {
-      // 1. Calcular Racha
       const profileSnap = await getDoc(userDocRef);
       if (profileSnap.exists()) {
         const profile = profileSnap.data() as UserProfile;
@@ -110,7 +149,6 @@ export default function RegistrarPage() {
         }
       }
 
-      // 2. Guardar comida
       const finalData = analysisResult || { calories: 0, protein: 0, carbohydrates: 0, fats: 0, analysisRaw: '{}' };
       const mealLog = {
         userId: user.uid,

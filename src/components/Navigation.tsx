@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from 'next/link';
@@ -13,8 +12,8 @@ export function BottomNav() {
 
   const hideOnPaths = ['/login', '/register', '/onboarding', '/forgot-password', '/'];
   // Normalizar el pathname para comparaciones (quitar trailing slashes)
-  const currentPath = pathname?.replace(/\/$/, '') || '';
-  const shouldHide = hideOnPaths.includes(currentPath || '/') || !user;
+  const currentPath = pathname?.replace(/\/$/, '') || '/';
+  const shouldHide = hideOnPaths.includes(currentPath) || !user;
 
   if (shouldHide) return null;
 
@@ -31,7 +30,7 @@ export function BottomNav() {
       <nav className="max-w-sm mx-auto glass rounded-[2.2rem] flex justify-around items-center h-[68px] px-2 border-white/10 pointer-events-auto shadow-[0_20px_50px_rgba(0,0,0,0.3)]">
         {navItems.map((item) => {
           const Icon = item.icon;
-          const itemPath = item.href.replace(/\/$/, '');
+          const itemPath = item.href.replace(/\/$/, '') || '/';
           // El dashboard es un caso especial para la ruta raíz después del login
           const isActive = currentPath === itemPath || (itemPath !== '/dashboard' && currentPath.startsWith(itemPath));
           
