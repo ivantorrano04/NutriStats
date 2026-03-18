@@ -260,7 +260,7 @@ function FriendViewModal({ friendId, onClose }: { friendId: string, onClose: () 
   };
 
   return (
-    <Dialog open={!!friendId} onOpenChange={onClose}>
+    <Dialog open={!!friendId} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="glass border-none sm:max-w-lg max-h-[85vh] overflow-y-auto p-0 gap-0 rounded-[3rem] shadow-[0_50px_100px_rgba(0,0,0,0.5)]">
         <DialogHeader className="p-8 bg-gradient-to-br from-primary/10 to-transparent sticky top-0 z-10 backdrop-blur-xl">
           <DialogTitle className="text-2xl font-headline flex items-center justify-between gap-4">
@@ -278,7 +278,7 @@ function FriendViewModal({ friendId, onClose }: { friendId: string, onClose: () 
             <Button 
               size="icon" 
               variant="secondary" 
-              className="rounded-full h-14 w-14 glass hover:bg-orange-500/20 text-orange-500 border-white/5 ios-btn shadow-xl"
+              className="rounded-full h-14 w-14 glass hover:bg-orange-500/20 text-orange-500 border-white/5 ios-btn shadow-xl mr-8"
               onClick={handleSendFire}
               disabled={reacting}
             >
