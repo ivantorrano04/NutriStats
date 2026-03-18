@@ -1,25 +1,31 @@
+# codemagic.yaml para Capacitor con Node 22+ y Swift Package Manager
 workflows:
   ios-release:
-    name: NutriStats Firebase Build
+    name: NutriStats iOS Release (Unsigned)
     max_build_duration: 60
     instance_type: mac_mini_m1
     environment:
-      node: 20
+      node: 22.14.0 # Forzamos la versión 22 exigida por Capacitor CLI
       xcode: latest
     scripts:
+      - name: Set Node version
+        script: |
+          # Asegura que el entorno use Node 22 antes de cualquier comando npx
+          nvm use 22 || nvm install 22
       - name: Install dependencies
         script: |
           npm install
       - name: Next.js Build and Export
         script: |
-          # Importante: Esto genera la carpeta 'out' necesaria para Capacitor
+          # Genera la carpeta 'out' necesaria para Capacitor
           npm run build
       - name: Capacitor Sync
         script: |
-          # Copia los archivos de Firebase/Next.js al proyecto de iOS
+          # Copia los archivos de Next.js al proyecto nativo
           npx cap sync ios
-      - name: Build iOS App (No Codesign)
+      - name: Build iOS App (No Codesign - SPM Mode)
         script: |
+          # Usamos -project ios/App/App.xcodeproj porque usas SPM
           xcodebuild build \
             -project ios/App/App.xcodeproj \
             -scheme App \
@@ -31,9 +37,16 @@ workflows:
             PROVISIONING_PROFILE=""
       - name: Package App as Zip
         script: |
+          # Localizamos el binario generado en los datos derivados de Xcode
           cd ~/Library/Developer/Xcode/DerivedData
           APP_PATH=$(find . -name "App.app" -type d | grep "Release-iphoneos" | head -1)
-          if [ -z "$APP_PATH" ]; then exit 1; fi
+          
+          if [ -z "$APP_PATH" ]; then
+            echo "Error: No se encontró el archivo App.app. Revisa los logs de compilación de Xcode."
+            exit 1
+          fi
+          
+          echo "Archivo encontrado en: $APP_PATH"
           cd "$APP_PATH/.."
           zip -r NutriStats.app.zip App.app
           mv NutriStats.app.zip $CM_BUILD_DIR/
