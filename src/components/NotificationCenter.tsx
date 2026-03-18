@@ -5,7 +5,7 @@ import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebas
 import { collection, query, orderBy, limit, doc, writeBatch } from 'firebase/firestore';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Bell, BellDot, CheckCheck, Inbox, Info, Sparkles, Trophy, AlertTriangle, Flame, Trash2, Clock } from 'lucide-react';
+import { Bell, BellDot, CheckCheck, Inbox, Info, Sparkles, Trophy, AlertTriangle, Flame, Trash2, Clock, Users } from 'lucide-react';
 import { AppNotification } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
@@ -92,10 +92,13 @@ export function NotificationCenter() {
           )}
         </Button>
       </SheetTrigger>
-      <SheetContent className="glass border-l-0 sm:border-l border-border/20 sm:max-w-md p-0 [&>button]:hidden rounded-l-[3rem] overflow-hidden shadow-2xl">
-        <SheetHeader className="p-8 pb-4 bg-background/50 backdrop-blur-3xl sticky top-0 z-20">
+      <SheetContent className="glass border-l border-white/10 sm:max-w-md p-0 [&>button]:hidden rounded-l-[3rem] overflow-hidden shadow-2xl">
+        <SheetHeader className="p-8 pb-4 bg-background/50 backdrop-blur-3xl sticky top-0 z-20 border-b border-white/5">
           <div className="flex items-center justify-between w-full">
-            <SheetTitle className="text-2xl font-headline font-bold">Resumen</SheetTitle>
+            <SheetTitle className="text-2xl font-headline font-bold flex items-center gap-2">
+              Notificaciones
+              {unreadCount > 0 && <span className="bg-primary/20 text-primary text-[10px] px-2 py-0.5 rounded-full">{unreadCount}</span>}
+            </SheetTitle>
             <div className="flex gap-1.5">
               {unreadCount > 0 && (
                 <Button variant="ghost" size="sm" onClick={markAllAsRead} className="text-[9px] font-bold text-primary hover:bg-primary/10 h-8 rounded-xl px-2.5 ios-btn">
@@ -130,7 +133,7 @@ export function NotificationCenter() {
                 className={cn(
                   "p-5 rounded-[1.8rem] transition-all cursor-pointer border relative group ios-btn",
                   n.read 
-                    ? "bg-secondary/20 border-transparent opacity-50" 
+                    ? "bg-secondary/10 border-transparent opacity-50" 
                     : "glass border-primary/20 shadow-xl shadow-primary/5"
                 )}
               >
@@ -138,7 +141,7 @@ export function NotificationCenter() {
                 <div className="flex gap-4">
                   <div className={cn(
                     "w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 shadow-inner",
-                    n.read ? "bg-secondary/40" : "bg-primary/10"
+                    n.read ? "bg-secondary/20" : "bg-primary/10"
                   )}>
                     {getIcon(n.type)}
                   </div>
