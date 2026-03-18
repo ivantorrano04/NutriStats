@@ -45,6 +45,9 @@ export const createServer = proxy;
 export const connect = proxy;
 export const codes = proxy;
 export const createConnection = proxy;
+export const isIP = proxy;
+export const isIPv4 = proxy;
+export const isIPv6 = proxy;
 
 // http2 specific constants
 export const HTTP2_HEADER_AUTHORITY = ':authority';
