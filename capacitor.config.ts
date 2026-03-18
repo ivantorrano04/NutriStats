@@ -5,9 +5,9 @@ const config: CapacitorConfig = {
   appName: 'NutriStats',
   webDir: 'out',
   server: {
-    // Esto ayuda a que el iPhone trate la app como un sitio seguro
-    androidScheme: 'https',
-    iosScheme: 'capacitor'
+    // Usar 'app' es el estándar más compatible para iOS moderno
+    iosScheme: 'app',
+    hostname: 'localhost'
   }
 };
 

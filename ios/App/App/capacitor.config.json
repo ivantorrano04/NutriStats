@@ -3,8 +3,8 @@
 	"appName": "NutriStats",
 	"webDir": "out",
 	"server": {
-		"androidScheme": "https",
-		"iosScheme": "capacitor"
+		"iosScheme": "app",
+		"hostname": "localhost"
 	},
 	"packageClassList": []
 }

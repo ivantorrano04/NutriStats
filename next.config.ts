@@ -1,17 +1,14 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  output: 'export',
+  output: 'export', // Obligatorio para generar la carpeta 'out'
   images: {
-    unoptimized: true,
+    unoptimized: true, // Obligatorio: iOS no puede optimizar imágenes en local
   },
-  // Al usar export estático, esto asegura que cada página tenga su carpeta /index.html
-  // Muy importante para que Capacitor no se pierda con las rutas
-  trailingSlash: true, 
+  trailingSlash: true, // Obligatorio: asegura que /perfil se convierta en /perfil/index.html
   
-  // Si con la versión anterior te fallaba, prueba a COMENTAR el assetPrefix. 
-  // Capacitor maneja la raíz automáticamente si webDir está bien configurado.
-  // assetPrefix: './', 
+  // Nota: Hemos eliminado assetPrefix: './' ya que con trailingSlash: true
+  // y la configuración de server en Capacitor, no debería ser necesario.
 
   eslint: {
     ignoreDuringBuilds: true,
