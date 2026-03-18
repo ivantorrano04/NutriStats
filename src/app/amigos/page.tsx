@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, UserPlus, Check, X, Users, Activity, Utensils, Camera, ChevronRight, Flame } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Friendship, UserProfile, MealRecord } from '@/lib/types';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
@@ -261,30 +261,37 @@ function FriendViewModal({ friendId, onClose }: { friendId: string, onClose: () 
 
   return (
     <Dialog open={!!friendId} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="glass border-none sm:max-w-lg max-h-[85vh] overflow-y-auto p-0 gap-0 rounded-[3rem] shadow-[0_50px_100px_rgba(0,0,0,0.5)]">
-        <DialogHeader className="p-8 bg-gradient-to-br from-primary/10 to-transparent sticky top-0 z-10 backdrop-blur-xl">
-          <DialogTitle className="text-2xl font-headline flex items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
+      <DialogContent className="glass border-none sm:max-w-lg max-h-[85vh] overflow-y-auto p-0 gap-0 rounded-[3rem] shadow-[0_50px_100px_rgba(0,0,0,0.5)] [&>button]:hidden">
+        <DialogHeader className="p-8 bg-background/80 dark:bg-card/80 sticky top-0 z-20 backdrop-blur-2xl border-b border-border/50">
+          <div className="flex items-center justify-between w-full">
+            <DialogTitle className="text-2xl font-headline flex items-center gap-4">
               <div className="w-16 h-16 rounded-2xl bg-primary flex items-center justify-center font-bold text-white text-3xl shadow-2xl shadow-primary/30">
                 {profile?.name?.charAt(0)}
               </div>
               <div className="text-left space-y-0.5">
-                <p className="font-bold text-2xl tracking-tight">{profile?.name}</p>
+                <p className="font-bold text-2xl tracking-tight text-foreground">{profile?.name}</p>
                 <p className="text-[10px] font-bold text-muted-foreground flex items-center gap-1 uppercase tracking-widest opacity-70">
                   <Activity className="w-3 h-3" /> Meta: {profile?.objetivo?.replace('_', ' ')}
                 </p>
               </div>
+            </DialogTitle>
+            <div className="flex items-center gap-2">
+              <Button 
+                size="icon" 
+                variant="secondary" 
+                className="rounded-full h-12 w-12 glass hover:bg-orange-500/20 text-orange-500 border-white/5 ios-btn shadow-lg"
+                onClick={handleSendFire}
+                disabled={reacting}
+              >
+                {reacting ? <Loader2 className="animate-spin w-5 h-5" /> : <Flame className="w-6 h-6 fill-orange-500" />}
+              </Button>
+              <DialogClose asChild>
+                <Button variant="ghost" size="icon" className="rounded-full h-12 w-12 hover:bg-secondary/80 ios-btn">
+                  <X className="w-6 h-6 text-foreground" />
+                </Button>
+              </DialogClose>
             </div>
-            <Button 
-              size="icon" 
-              variant="secondary" 
-              className="rounded-full h-14 w-14 glass hover:bg-orange-500/20 text-orange-500 border-white/5 ios-btn shadow-xl mr-8"
-              onClick={handleSendFire}
-              disabled={reacting}
-            >
-              {reacting ? <Loader2 className="animate-spin w-6 h-6" /> : <Flame className="w-7 h-7 fill-orange-500" />}
-            </Button>
-          </DialogTitle>
+          </div>
         </DialogHeader>
         
         <div className="p-8 space-y-10">
@@ -293,10 +300,10 @@ function FriendViewModal({ friendId, onClose }: { friendId: string, onClose: () 
               <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground opacity-80">Progreso Calórico</h3>
               <span className="text-sm font-bold text-primary">{calPct.toFixed(0)}%</span>
             </div>
-            <div className="bg-black/20 dark:bg-white/5 p-8 rounded-[2.5rem] space-y-6 border border-white/5 shadow-inner">
+            <div className="bg-secondary/30 dark:bg-white/5 p-8 rounded-[2.5rem] space-y-6 border border-border/50 dark:border-white/5 shadow-inner">
               <div className="flex justify-between items-baseline">
                 <div>
-                  <span className="text-5xl font-headline font-bold tracking-tighter">{consumed}</span>
+                  <span className="text-5xl font-headline font-bold tracking-tighter text-foreground">{consumed}</span>
                   <span className="text-sm text-muted-foreground font-medium ml-2 opacity-60">/ {goal} kcal</span>
                 </div>
                 {calPct >= 100 && (
@@ -314,13 +321,13 @@ function FriendViewModal({ friendId, onClose }: { friendId: string, onClose: () 
               <Utensils className="w-3 h-3 text-accent" /> Diario de Comidas de Hoy
             </h3>
             {meals?.length === 0 ? (
-              <div className="text-center py-16 glass rounded-[2.5rem] opacity-30 border-dashed border-white/10">
+              <div className="text-center py-16 glass rounded-[2.5rem] opacity-30 border-dashed border-border/50">
                 <p className="text-sm font-medium">Aún no hay registros hoy.</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-5">
                 {meals?.map(m => (
-                  <Card key={m.id} className="glass border-none overflow-hidden hover:bg-white/5 transition-all shadow-lg group">
+                  <Card key={m.id} className="glass border-none overflow-hidden hover:bg-white/5 dark:hover:bg-white/5 transition-all shadow-lg group">
                     <div className="flex items-center">
                       <div className="w-32 h-32 sm:w-40 sm:h-40 bg-secondary/20 shrink-0 relative overflow-hidden">
                         {m.photoDataUri ? (
@@ -334,7 +341,7 @@ function FriendViewModal({ friendId, onClose }: { friendId: string, onClose: () 
                       </div>
                       <div className="p-6 flex-1 flex flex-col justify-between h-full min-w-0">
                         <div className="space-y-1">
-                          <p className="font-bold text-xl leading-tight truncate">{m.mealType}</p>
+                          <p className="font-bold text-xl leading-tight truncate text-foreground">{m.mealType}</p>
                           <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest opacity-60">
                             {new Date(m.logDateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </p>
@@ -355,13 +362,13 @@ function FriendViewModal({ friendId, onClose }: { friendId: string, onClose: () 
           </section>
 
           <div className="grid grid-cols-2 gap-5 pb-12">
-             <Card className="glass border-none p-6 space-y-2 shadow-xl bg-white/5">
+             <Card className="glass border-none p-6 space-y-2 shadow-xl bg-card/50">
                 <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground opacity-60">Peso Actual</p>
-                <p className="text-2xl font-bold tracking-tight">{profile?.peso || '--'} kg</p>
+                <p className="text-2xl font-bold tracking-tight text-foreground">{profile?.peso || '--'} kg</p>
              </Card>
-             <Card className="glass border-none p-6 space-y-2 shadow-xl bg-white/5">
+             <Card className="glass border-none p-6 space-y-2 shadow-xl bg-card/50">
                 <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground opacity-60">Actividad</p>
-                <p className="text-2xl font-bold tracking-tight capitalize truncate">{profile?.actividad?.replace('_', ' ')}</p>
+                <p className="text-2xl font-bold tracking-tight capitalize truncate text-foreground">{profile?.actividad?.replace('_', ' ')}</p>
              </Card>
           </div>
         </div>
