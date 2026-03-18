@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -294,6 +295,7 @@ function FriendViewModal({ friendId, onClose }: { friendId: string, onClose: () 
         </DialogHeader>
         
         <div className="p-8 space-y-10">
+          {/* Tarjeta de Progreso Calórico */}
           <section className="space-y-5">
             <div className="flex justify-between items-end px-1">
               <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground opacity-80">Progreso Calórico</h3>
@@ -315,6 +317,7 @@ function FriendViewModal({ friendId, onClose }: { friendId: string, onClose: () 
             </div>
           </section>
 
+          {/* Diario de Comidas */}
           <section className="space-y-6">
             <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-3 px-1">
               <Utensils className="w-3 h-3 text-accent" /> Diario de Comidas de Hoy
@@ -360,6 +363,7 @@ function FriendViewModal({ friendId, onClose }: { friendId: string, onClose: () 
             )}
           </section>
 
+          {/* Métricas Adicionales */}
           <div className="grid grid-cols-2 gap-5 pb-12">
              <Card className="bg-secondary/20 dark:bg-card/50 border-none p-6 space-y-2 shadow-inner rounded-[2rem]">
                 <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground opacity-60">Peso Actual</p>
