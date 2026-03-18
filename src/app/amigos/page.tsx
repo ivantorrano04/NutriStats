@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from 'react';
@@ -8,14 +7,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, UserPlus, Check, X, Users, Activity, Utensils, Camera, ChevronRight, Flame } from 'lucide-react';
+import { Loader2, UserPlus, Check, X, Users, Activity, Utensils, ChevronRight, Flame } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Friendship, UserProfile, MealRecord } from '@/lib/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
-import { cn } from '@/lib/utils';
 
 export default function AmigosPage() {
   const { user, isUserLoading } = useUser();
@@ -113,7 +111,7 @@ export default function AmigosPage() {
     });
   };
 
-  if (isUserLoading) return <div className="flex h-screen items-center justify-center"><Loader2 className="animate-spin" /></div>;
+  if (isUserLoading) return <div className="flex h-screen items-center justify-center"><Loader2 className="animate-spin text-primary" /></div>;
 
   return (
     <div className="min-h-screen bg-transparent pb-48">
@@ -128,18 +126,18 @@ export default function AmigosPage() {
             <div className="space-y-2">
               <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Tu ID NutriScan</p>
               <div className="flex gap-2">
-                <code className="bg-secondary/50 p-3 rounded-xl flex-1 font-mono text-xs truncate select-all">{user?.uid}</code>
-                <Button variant="secondary" className="rounded-xl" onClick={() => { navigator.clipboard.writeText(user?.uid || ''); toast({ title: 'ID Copiado' }); }}>Copiar</Button>
+                <code className="bg-secondary/50 p-3 rounded-xl flex-1 font-mono text-xs truncate select-all text-foreground">{user?.uid}</code>
+                <Button variant="secondary" className="rounded-xl ios-btn" onClick={() => { navigator.clipboard.writeText(user?.uid || ''); toast({ title: 'ID Copiado' }); }}>Copiar</Button>
               </div>
             </div>
             <div className="flex gap-2">
               <Input 
                 placeholder="Pega el ID de tu amigo..." 
-                className="glass rounded-xl" 
+                className="glass rounded-xl text-foreground" 
                 value={searchId}
                 onChange={e => setSearchId(e.target.value)}
               />
-              <Button onClick={sendRequest} disabled={searching || !searchId} className="rounded-xl bg-primary hover:bg-primary/90">
+              <Button onClick={sendRequest} disabled={searching || !searchId} className="rounded-xl bg-primary hover:bg-primary/90 ios-btn">
                 {searching ? <Loader2 className="animate-spin" /> : <UserPlus className="w-4 h-4 mr-2" />}
                 Invitar
               </Button>
@@ -149,15 +147,15 @@ export default function AmigosPage() {
 
         <Tabs defaultValue="friends" className="w-full">
           <TabsList className="grid w-full grid-cols-2 glass p-1 rounded-2xl">
-            <TabsTrigger value="friends" className="rounded-xl font-bold">Amigos ({acceptedFriends.length})</TabsTrigger>
-            <TabsTrigger value="pending" className="rounded-xl font-bold">Solicitudes ({pendingReceived.length})</TabsTrigger>
+            <TabsTrigger value="friends" className="rounded-xl font-bold text-foreground">Amigos ({acceptedFriends.length})</TabsTrigger>
+            <TabsTrigger value="pending" className="rounded-xl font-bold text-foreground">Solicitudes ({pendingReceived.length})</TabsTrigger>
           </TabsList>
           
           <TabsContent value="friends" className="pt-6 space-y-4">
             {acceptedFriends.length === 0 ? (
               <div className="text-center py-20 opacity-50 bg-secondary/10 rounded-3xl border-2 border-dashed border-border">
-                <Users className="w-12 h-12 mx-auto mb-4" />
-                <p className="font-medium">¿Te sientes solo? ¡Invita a tu primer amigo!</p>
+                <Users className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                <p className="font-medium text-foreground">¿Te sientes solo? ¡Invita a tu primer amigo!</p>
               </div>
             ) : (
               acceptedFriends.map(f => (
@@ -168,7 +166,7 @@ export default function AmigosPage() {
                         {f.friendName.charAt(0)}
                       </div>
                       <div>
-                        <p className="font-bold text-lg">{f.friendName}</p>
+                        <p className="font-bold text-lg text-foreground">{f.friendName}</p>
                         <p className="text-[10px] text-accent font-bold uppercase tracking-wider">Ver actividad de hoy</p>
                       </div>
                     </div>
@@ -182,19 +180,19 @@ export default function AmigosPage() {
           <TabsContent value="pending" className="pt-6 space-y-4">
             {pendingReceived.length === 0 ? (
               <div className="text-center py-20 opacity-30">
-                <UserPlus className="w-10 h-10 mx-auto mb-4" />
-                <p>Sin solicitudes pendientes.</p>
+                <UserPlus className="w-10 h-10 mx-auto mb-4 text-muted-foreground" />
+                <p className="text-foreground">Sin solicitudes pendientes.</p>
               </div>
             ) : (
               pendingReceived.map(f => (
                 <Card key={f.friendId} className="glass border-none">
                   <CardContent className="p-4 flex justify-between items-center">
                     <div className="flex items-center gap-3">
-                       <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center font-bold text-xs">{f.friendName.charAt(0)}</div>
-                       <p className="font-bold">{f.friendName}</p>
+                       <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center font-bold text-xs text-foreground">{f.friendName.charAt(0)}</div>
+                       <p className="font-bold text-foreground">{f.friendName}</p>
                     </div>
                     <div className="flex gap-2">
-                      <Button size="icon" className="bg-emerald-500 hover:bg-emerald-600 h-9 w-9 rounded-xl ios-btn" onClick={() => respondRequest(f.friendId, true)}>
+                      <Button size="icon" className="bg-emerald-500 hover:bg-emerald-600 h-9 w-9 rounded-xl ios-btn text-white" onClick={() => respondRequest(f.friendId, true)}>
                         <Check className="h-4 w-4" />
                       </Button>
                       <Button size="icon" variant="destructive" className="h-9 w-9 rounded-xl ios-btn" onClick={() => respondRequest(f.friendId, false)}>
@@ -301,7 +299,7 @@ function FriendViewModal({ friendId, onClose }: { friendId: string, onClose: () 
               <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground opacity-80">Progreso Calórico</h3>
               <span className="text-sm font-bold text-primary">{calPct.toFixed(0)}%</span>
             </div>
-            <div className="bg-secondary/40 dark:bg-white/5 p-8 rounded-[2.5rem] space-y-6 border border-border/50 dark:border-white/5 shadow-inner">
+            <div className="bg-secondary/30 dark:bg-white/5 p-8 rounded-[2.5rem] space-y-6 border border-border/50 dark:border-white/5 shadow-inner">
               <div className="flex justify-between items-baseline">
                 <div>
                   <span className="text-5xl font-headline font-bold tracking-tighter text-foreground">{consumed}</span>
@@ -323,19 +321,19 @@ function FriendViewModal({ friendId, onClose }: { friendId: string, onClose: () 
             </h3>
             {meals?.length === 0 ? (
               <div className="text-center py-16 bg-secondary/20 dark:bg-white/5 rounded-[2.5rem] opacity-30 border-dashed border-2 border-border/50">
-                <p className="text-sm font-medium">Aún no hay registros hoy.</p>
+                <p className="text-sm font-medium text-foreground">Aún no hay registros hoy.</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-5">
                 {meals?.map(m => (
-                  <Card key={m.id} className="bg-white dark:bg-white/5 border border-border/50 dark:border-none overflow-hidden hover:bg-secondary/50 dark:hover:bg-white/10 transition-all shadow-lg group rounded-[2rem]">
+                  <Card key={m.id} className="bg-white dark:bg-white/5 border border-border/50 dark:border-none overflow-hidden hover:bg-secondary/10 dark:hover:bg-white/10 transition-all shadow-lg group rounded-[2rem]">
                     <div className="flex items-center">
                       <div className="w-32 h-32 sm:w-40 sm:h-40 bg-secondary/20 shrink-0 relative overflow-hidden">
                         {m.photoDataUri ? (
                           <img src={m.photoDataUri} alt={m.mealType} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center opacity-10">
-                            <Utensils className="w-10 h-10" />
+                            <Utensils className="w-10 h-10 text-foreground" />
                           </div>
                         )}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />

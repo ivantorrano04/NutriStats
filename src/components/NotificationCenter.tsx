@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
@@ -93,9 +92,9 @@ export function NotificationCenter() {
         </Button>
       </SheetTrigger>
       <SheetContent className="glass border-l border-white/10 sm:max-w-md p-0 [&>button]:hidden rounded-l-[3rem] overflow-hidden shadow-2xl">
-        <SheetHeader className="p-8 pb-4 bg-background/50 backdrop-blur-3xl sticky top-0 z-20 border-b border-white/5">
+        <SheetHeader className="p-8 pb-4 bg-background/50 dark:bg-card/50 backdrop-blur-3xl sticky top-0 z-20 border-b border-white/5">
           <div className="flex items-center justify-between w-full">
-            <SheetTitle className="text-2xl font-headline font-bold flex items-center gap-2">
+            <SheetTitle className="text-2xl font-headline font-bold flex items-center gap-2 text-foreground">
               Notificaciones
               {unreadCount > 0 && <span className="bg-primary/20 text-primary text-[10px] px-2 py-0.5 rounded-full">{unreadCount}</span>}
             </SheetTitle>
@@ -121,8 +120,8 @@ export function NotificationCenter() {
                 <Inbox className="w-8 h-8 text-muted-foreground" />
               </div>
               <div className="space-y-1 px-8">
-                <p className="font-bold text-lg">Todo en orden</p>
-                <p className="text-[10px] font-medium leading-tight">No tienes notificaciones pendientes por ahora.</p>
+                <p className="font-bold text-lg text-foreground">Todo en orden</p>
+                <p className="text-[10px] font-medium leading-tight text-muted-foreground">No tienes notificaciones pendientes por ahora.</p>
               </div>
             </div>
           ) : (
@@ -133,7 +132,7 @@ export function NotificationCenter() {
                 className={cn(
                   "p-5 rounded-[1.8rem] transition-all cursor-pointer border relative group ios-btn",
                   n.read 
-                    ? "bg-secondary/10 border-transparent opacity-50" 
+                    ? "bg-secondary/10 dark:bg-white/5 border-transparent opacity-50" 
                     : "glass border-primary/20 shadow-xl shadow-primary/5"
                 )}
               >
@@ -141,16 +140,16 @@ export function NotificationCenter() {
                 <div className="flex gap-4">
                   <div className={cn(
                     "w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 shadow-inner",
-                    n.read ? "bg-secondary/20" : "bg-primary/10"
+                    n.read ? "bg-secondary/20 dark:bg-white/10" : "bg-primary/10"
                   )}>
                     {getIcon(n.type)}
                   </div>
                   <div className="space-y-1 flex-1 min-w-0">
-                    <h4 className={cn("text-sm font-bold truncate", !n.read && "text-primary")}>{n.title}</h4>
+                    <h4 className={cn("text-sm font-bold truncate", !n.read ? "text-primary" : "text-foreground")}>{n.title}</h4>
                     <p className="text-[11px] text-muted-foreground leading-snug font-medium">{n.message}</p>
                     <div className="flex items-center gap-1.5 pt-2 opacity-50">
-                      <Clock className="w-3 h-3" />
-                      <p className="text-[9px] font-bold uppercase tracking-wider">
+                      <Clock className="w-3 h-3 text-muted-foreground" />
+                      <p className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">
                         {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true, locale: es })}
                       </p>
                     </div>

@@ -72,7 +72,7 @@
     height: 100%;
   }
   body {
-    @apply font-body antialiased transition-colors duration-500;
+    @apply font-body antialiased transition-colors duration-500 text-foreground;
     background-color: hsl(var(--background));
     background-image: 
       radial-gradient(at 0% 0%, var(--liquid-1) 0px, transparent 50%),
@@ -86,9 +86,9 @@
 
 /* Efecto LiquidGlass Estilo iOS NATIVO */
 .glass {
-  @apply backdrop-blur-[40px] border transition-all duration-300 ease-out;
-  background: rgba(255, 255, 255, 0.65);
-  backdrop-filter: blur(40px) saturate(180%);
+  @apply backdrop-blur-[60px] border transition-all duration-300 ease-out;
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(60px) saturate(190%);
   border-color: rgba(255, 255, 255, 0.4);
   box-shadow: 
     0 8px 32px 0 rgba(0, 0, 0, 0.04),
@@ -96,8 +96,8 @@
 }
 
 .dark .glass {
-  background: rgba(18, 18, 23, 0.75);
-  backdrop-filter: blur(40px) saturate(200%);
+  background: rgba(18, 18, 23, 0.85);
+  backdrop-filter: blur(60px) saturate(210%);
   border-color: rgba(255, 255, 255, 0.08);
   box-shadow: 
     0 12px 40px 0 rgba(0, 0, 0, 0.4),
