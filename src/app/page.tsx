@@ -19,8 +19,8 @@ export default function Landing() {
   useEffect(() => {
     if (!isUserLoading) {
       if (!user) {
-        // No hay sesión -> Login
-        router.push('/login');
+        // No hay sesión -> Mandar a Registro por defecto
+        router.push('/register');
       } else if (!isProfileLoading) {
         if (!profile) {
           // Sesión iniciada pero sin datos físicos -> Onboarding
@@ -42,7 +42,7 @@ export default function Landing() {
         </div>
       </div>
       <div className="text-center space-y-2">
-        <h1 className="text-4xl font-headline font-bold tracking-tighter">NutriScan</h1>
+        <h1 className="text-4xl font-headline font-bold tracking-tighter text-foreground">NutriScan</h1>
         <p className="text-muted-foreground font-medium animate-pulse">Sincronizando tu experiencia...</p>
       </div>
       <Loader2 className="w-6 h-6 animate-spin text-primary opacity-50" />

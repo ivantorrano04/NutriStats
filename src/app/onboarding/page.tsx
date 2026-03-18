@@ -12,7 +12,8 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ActivityLevel, Goal, Gender, UserProfile, Intensity } from '@/lib/types';
-import { Loader2, Sparkles } from 'lucide-react';
+import { Loader2, Sparkles, ChevronRight, Target, Activity, Ruler } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const ACTIVITY_DESC: Record<ActivityLevel, string> = {
   sedentario: 'Poco o nada (0 días)',
@@ -65,7 +66,6 @@ export default function OnboardingPage() {
     };
     let tdee = bmr * factors[u.actividad as ActivityLevel];
     
-    // Ajuste por intensidad
     const intensityAdjustment: Record<Intensity, number> = {
       saludable: 300,
       moderado: 600,
@@ -103,6 +103,8 @@ export default function OnboardingPage() {
         carbohydrateGoalGrams: targets.carb,
         fatGoalGrams: targets.fat,
         metaAguaMl: targets.water,
+        streak: 0,
+        lastLogDate: '',
         createdAt: new Date().toISOString()
       };
 
@@ -114,134 +116,148 @@ export default function OnboardingPage() {
     }
   };
 
-  if (isUserLoading) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin" /></div>;
+  if (isUserLoading) return <div className="h-screen flex items-center justify-center bg-background"><Loader2 className="animate-spin text-primary w-12 h-12" /></div>;
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-6 transition-colors duration-500">
-      <div className="absolute inset-0 bg-primary/5 blur-[120px] rounded-full" />
-      <Card className="glass w-full max-w-md border-none shadow-2xl relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary to-accent" />
-        <CardHeader className="text-center space-y-2">
-          <div className="mx-auto w-12 h-12 bg-primary rounded-2xl flex items-center justify-center mb-2 shadow-lg shadow-primary/20">
-            <Sparkles className="text-white w-6 h-6" />
-          </div>
-          <CardTitle className="text-3xl font-headline font-bold">Configuración</CardTitle>
-          <CardDescription>Casi listo, {user?.displayName || 'Usuario'}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-5">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Peso Actual (kg)</Label>
-              <Input 
-                type="number" 
-                className="glass h-12" 
-                value={formData.peso ?? ''} 
-                onChange={e => setFormData({...formData, peso: Number(e.target.value)})} 
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Peso Objetivo (kg)</Label>
-              <Input 
-                type="number" 
-                className="glass h-12" 
-                value={formData.targetWeight ?? ''} 
-                onChange={e => setFormData({...formData, targetWeight: Number(e.target.value)})} 
-              />
-            </div>
-          </div>
+    <div className="min-h-screen bg-background flex items-center justify-center p-6 relative overflow-hidden">
+      <div className="absolute top-[-20%] left-[-20%] w-[60%] h-[60%] bg-primary/15 blur-[150px] rounded-full animate-pulse" />
+      <div className="absolute bottom-[-20%] right-[-20%] w-[60%] h-[60%] bg-accent/15 blur-[150px] rounded-full animate-pulse" style={{ animationDelay: '3s' }} />
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Altura (cm)</Label>
-              <Input 
-                type="number" 
-                className="glass h-12" 
-                value={formData.altura ?? ''} 
-                onChange={e => setFormData({...formData, altura: Number(e.target.value)})} 
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Edad</Label>
-              <Input 
-                type="number" 
-                className="glass h-12" 
-                value={formData.edad ?? ''} 
-                onChange={e => setFormData({...formData, edad: Number(e.target.value)})} 
-              />
-            </div>
+      <div className="w-full max-w-lg relative z-10 space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-1000">
+        <header className="text-center space-y-3">
+          <div className="mx-auto w-16 h-16 rounded-[1.5rem] bg-primary flex items-center justify-center shadow-2xl shadow-primary/20 animate-float">
+            <Sparkles className="text-white w-8 h-8" />
           </div>
+          <h1 className="text-4xl font-headline font-bold tracking-tighter text-foreground pt-2">Tu Plan IA</h1>
+          <p className="text-muted-foreground font-medium max-w-[280px] mx-auto leading-tight">Configura tu perfil para que la IA diseñe tus macros</p>
+        </header>
 
-          <div className="space-y-2">
-            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Nivel de Actividad</Label>
-            <Select value={formData.actividad} onValueChange={v => setFormData({...formData, actividad: v as ActivityLevel})}>
-              <SelectTrigger className="glass h-12">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="glass border-none">
-                {Object.entries(ACTIVITY_DESC).map(([key, desc]) => (
-                  <SelectItem key={key} value={key}>
-                    <div className="flex flex-col text-left">
-                      <span className="capitalize font-bold">{key.replace('_', ' ')}</span>
-                      <span className="text-[10px] text-muted-foreground">{desc}</span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+        <Card className="glass border-none shadow-[0_50px_100px_rgba(0,0,0,0.4)] rounded-[3rem] overflow-hidden">
+          <CardHeader className="pb-0 pt-10 px-8">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-primary/20 flex items-center justify-center">
+                 <Target className="w-5 h-5 text-primary" />
+              </div>
+              <CardTitle className="text-2xl font-headline font-bold">Biometría</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="p-8 space-y-8">
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground px-1">Peso Actual (kg)</Label>
+                <Input 
+                  type="number" 
+                  className="glass h-14 rounded-2xl border-white/5 text-lg font-bold" 
+                  value={formData.peso ?? ''} 
+                  onChange={e => setFormData({...formData, peso: Number(e.target.value)})} 
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground px-1">Peso Objetivo (kg)</Label>
+                <Input 
+                  type="number" 
+                  className="glass h-14 rounded-2xl border-white/5 text-lg font-bold" 
+                  value={formData.targetWeight ?? ''} 
+                  onChange={e => setFormData({...formData, targetWeight: Number(e.target.value)})} 
+                />
+              </div>
+            </div>
 
-          <div className="grid grid-cols-1 gap-4">
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground px-1">Altura (cm)</Label>
+                <Input 
+                  type="number" 
+                  className="glass h-14 rounded-2xl border-white/5 text-lg font-bold" 
+                  value={formData.altura ?? ''} 
+                  onChange={e => setFormData({...formData, altura: Number(e.target.value)})} 
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground px-1">Edad</Label>
+                <Input 
+                  type="number" 
+                  className="glass h-14 rounded-2xl border-white/5 text-lg font-bold" 
+                  value={formData.edad ?? ''} 
+                  onChange={e => setFormData({...formData, edad: Number(e.target.value)})} 
+                />
+              </div>
+            </div>
+
             <div className="space-y-2">
-              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Tu Objetivo</Label>
-              <Select value={formData.objetivo} onValueChange={v => setFormData({...formData, objetivo: v as Goal})}>
-                <SelectTrigger className="glass h-12">
+              <Label className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground px-1 flex items-center gap-2">
+                <Activity className="w-3 h-3" /> Nivel de Actividad
+              </Label>
+              <Select value={formData.actividad} onValueChange={v => setFormData({...formData, actividad: v as ActivityLevel})}>
+                <SelectTrigger className="glass h-14 rounded-2xl border-white/5 text-sm font-medium">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="glass border-none">
-                  {Object.entries(GOAL_LABELS).map(([key, label]) => (
-                    <SelectItem key={key} value={key}>{label}</SelectItem>
+                <SelectContent className="glass border-white/5 rounded-2xl">
+                  {Object.entries(ACTIVITY_DESC).map(([key, desc]) => (
+                    <SelectItem key={key} value={key}>
+                      <div className="flex flex-col text-left py-1">
+                        <span className="capitalize font-bold text-sm">{key.replace('_', ' ')}</span>
+                        <span className="text-[10px] text-muted-foreground">{desc}</span>
+                      </div>
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Agresividad de la Dieta</Label>
-              <Select value={formData.intensity} onValueChange={v => setFormData({...formData, intensity: v as Intensity})}>
-                <SelectTrigger className="glass h-12">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="glass border-none">
-                  {Object.entries(INTENSITY_LABELS).map(([key, label]) => (
-                    <SelectItem key={key} value={key}>{label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+
+            <div className="grid grid-cols-1 gap-6">
+              <div className="space-y-2">
+                <Label className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground px-1">Tu Objetivo Principal</Label>
+                <Select value={formData.objetivo} onValueChange={v => setFormData({...formData, objetivo: v as Goal})}>
+                  <SelectTrigger className="glass h-14 rounded-2xl border-white/5 text-sm font-medium">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="glass border-white/5 rounded-2xl">
+                    {Object.entries(GOAL_LABELS).map(([key, label]) => (
+                      <SelectItem key={key} value={key} className="font-bold">{label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-          </div>
 
-          <div className="space-y-4">
-            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Género</Label>
-            <RadioGroup value={formData.genero} onValueChange={v => setFormData({...formData, genero: v as Gender})} className="flex gap-4">
-              <div className="flex items-center space-x-2 glass px-4 py-2 rounded-xl cursor-pointer">
-                <RadioGroupItem value="hombre" id="h" />
-                <Label htmlFor="h">Hombre</Label>
-              </div>
-              <div className="flex items-center space-x-2 glass px-4 py-2 rounded-xl cursor-pointer">
-                <RadioGroupItem value="mujer" id="m" />
-                <Label htmlFor="m">Mujer</Label>
-              </div>
-            </RadioGroup>
-          </div>
+            <div className="space-y-4">
+              <Label className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground px-1">Género</Label>
+              <RadioGroup value={formData.genero} onValueChange={v => setFormData({...formData, genero: v as Gender})} className="flex gap-4">
+                <div className={cn(
+                  "flex-1 flex items-center justify-center gap-2 glass px-6 py-4 rounded-2xl cursor-pointer transition-all border-white/5",
+                  formData.genero === 'hombre' ? "bg-primary/20 border-primary/40 shadow-lg shadow-primary/10" : "hover:bg-white/5"
+                )} onClick={() => setFormData({...formData, genero: 'hombre'})}>
+                  <RadioGroupItem value="hombre" id="h" className="sr-only" />
+                  <span className="font-bold tracking-tight">Hombre</span>
+                </div>
+                <div className={cn(
+                  "flex-1 flex items-center justify-center gap-2 glass px-6 py-4 rounded-2xl cursor-pointer transition-all border-white/5",
+                  formData.genero === 'mujer' ? "bg-primary/20 border-primary/40 shadow-lg shadow-primary/10" : "hover:bg-white/5"
+                )} onClick={() => setFormData({...formData, genero: 'mujer'})}>
+                  <RadioGroupItem value="mujer" id="m" className="sr-only" />
+                  <span className="font-bold tracking-tight">Mujer</span>
+                </div>
+              </RadioGroup>
+            </div>
 
-          <Button 
-            className="w-full h-14 text-lg font-bold bg-primary hover:bg-primary/90 mt-4 rounded-2xl shadow-xl shadow-primary/20" 
-            onClick={handleStart}
-            disabled={loading}
-          >
-            {loading ? <Loader2 className="animate-spin mr-2" /> : 'Calcular mi Plan'}
-          </Button>
-        </CardContent>
-      </Card>
+            <Button 
+              className="w-full h-18 py-8 text-xl font-bold bg-primary hover:bg-primary/90 mt-4 rounded-[2rem] shadow-2xl shadow-primary/30 group ios-btn transition-all" 
+              onClick={handleStart}
+              disabled={loading}
+            >
+              {loading ? (
+                <Loader2 className="animate-spin mr-2" />
+              ) : (
+                <>
+                  <span>Crear mi Plan</span>
+                  <ChevronRight className="w-6 h-6 ml-2 group-hover:translate-x-1 transition-transform" />
+                </>
+              )}
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
