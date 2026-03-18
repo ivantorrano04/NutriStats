@@ -33,12 +33,13 @@ export default function RegistrarPage() {
 
   const userDocRef = useMemoFirebase(() => user ? doc(db, 'users', user.uid) : null, [db, user]);
 
-  // Función para redimensionar la imagen antes de procesarla para evitar crashes de memoria
   const resizeImage = (file: File): Promise<string> => {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       const reader = new FileReader();
+      reader.onerror = () => reject(new Error("Error al leer archivo"));
       reader.onload = (e) => {
         const img = new Image();
+        img.onerror = () => reject(new Error("Error al cargar imagen"));
         img.onload = () => {
           const canvas = document.createElement('canvas');
           const MAX_WIDTH = 1024;
@@ -61,7 +62,9 @@ export default function RegistrarPage() {
           canvas.width = width;
           canvas.height = height;
           const ctx = canvas.getContext('2d');
-          ctx?.drawImage(img, 0, 0, width, height);
+          if (!ctx) return reject(new Error("Canvas context no disponible"));
+          
+          ctx.drawImage(img, 0, 0, width, height);
           resolve(canvas.toDataURL('image/jpeg', 0.8));
         };
         img.src = e.target?.result as string;
@@ -79,9 +82,14 @@ export default function RegistrarPage() {
         const optimizedDataUri = await resizeImage(file);
         setPhoto(optimizedDataUri);
         await runAnalysis(optimizedDataUri);
-      } catch (err) {
+      } catch (err: any) {
         console.error("Error optimizando imagen:", err);
-        setError("Error al procesar la imagen. Intenta con otra.");
+        setError("La imagen es demasiado pesada o incompatible. Prueba con otra.");
+        toast({
+          variant: 'destructive',
+          title: 'Error de Cámara',
+          description: 'No se pudo procesar la foto seleccionada.',
+        });
         setAnalyzing(false);
       }
     }
@@ -178,30 +186,30 @@ export default function RegistrarPage() {
   };
 
   return (
-    <div className="min-h-screen bg-transparent pb-40">
-      <main className="pt-10 px-6 max-w-md mx-auto space-y-8">
+    <div className="min-h-screen bg-transparent pb-40 safe-area-pt h-screen overflow-hidden">
+      <main className="pt-6 px-6 max-w-md mx-auto space-y-6 h-full flex flex-col">
         <header className="flex items-center gap-4">
-          <Link href="/dashboard" className="glass h-12 w-12 rounded-2xl flex items-center justify-center ios-btn">
-             <ChevronLeft className="w-6 h-6" />
+          <Link href="/dashboard" className="glass h-11 w-11 rounded-2xl flex items-center justify-center ios-btn">
+             <ChevronLeft className="w-5 h-5" />
           </Link>
-          <div className="flex-1 text-center pr-12">
-            <h1 className="text-3xl font-headline font-bold">IA Scanner</h1>
-            <p className="text-muted-foreground text-xs font-bold uppercase tracking-widest opacity-60">Análisis Nutricional</p>
+          <div className="flex-1 text-center pr-11">
+            <h1 className="text-2xl font-headline font-bold">IA Scanner</h1>
+            <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest opacity-60">Análisis Nutricional</p>
           </div>
         </header>
 
         {!photo ? (
-          <div className="grid grid-cols-1 gap-6 mt-8">
+          <div className="flex-1 flex flex-col justify-center gap-6 pb-20">
             <Button 
-              className="h-72 rounded-[3.5rem] glass border-2 border-dashed border-primary/30 flex flex-col gap-6 text-muted-foreground hover:bg-primary/5 transition-all group ios-btn"
+              className="h-64 rounded-[3.5rem] glass border-2 border-dashed border-primary/30 flex flex-col gap-6 text-muted-foreground hover:bg-primary/5 transition-all group ios-btn"
               onClick={() => fileInputRef.current?.click()}
             >
-              <div className="w-20 h-20 rounded-[1.8rem] bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform shadow-xl">
-                <Camera className="w-10 h-10 text-primary" />
+              <div className="w-16 h-16 rounded-[1.5rem] bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform shadow-xl">
+                <Camera className="w-8 h-8 text-primary" />
               </div>
               <div className="text-center space-y-1">
                 <p className="font-bold text-foreground text-xl">Capturar Plato</p>
-                <p className="text-xs font-medium opacity-60">Saca una foto para analizar macros</p>
+                <p className="text-xs font-medium opacity-60 px-10 leading-relaxed">Saca una foto para que nuestra IA identifique tus macros automáticamente</p>
               </div>
             </Button>
             <input 
@@ -213,94 +221,88 @@ export default function RegistrarPage() {
             />
           </div>
         ) : (
-          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
-            <div className="relative aspect-square rounded-[3.5rem] overflow-hidden glass border-white/20 shadow-2xl group">
-              <img src={photo} alt="Preview" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000" />
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-8 duration-700 overflow-y-auto flex-1 no-scrollbar">
+            <div className="relative aspect-square rounded-[3rem] overflow-hidden glass border-white/20 shadow-2xl group">
+              <img src={photo} alt="Preview" className="w-full h-full object-cover" />
               {analyzing && (
                 <div className="absolute inset-0 bg-background/60 backdrop-blur-2xl flex flex-col items-center justify-center text-center p-10">
-                  <div className="relative mb-8">
+                  <div className="relative mb-6">
                     <div className="absolute inset-0 bg-primary/30 blur-3xl rounded-full animate-pulse" />
-                    <Loader2 className="w-16 h-16 animate-spin text-primary relative z-10" />
+                    <Loader2 className="w-12 h-12 animate-spin text-primary relative z-10" />
                   </div>
-                  <h2 className="font-headline font-bold text-3xl text-foreground">Escaneando...</h2>
-                  <p className="text-sm font-medium text-muted-foreground mt-3 opacity-80 leading-relaxed">Nuestra IA está identificando los ingredientes de tu plato</p>
-                </div>
-              )}
-              {!analyzing && analysisResult && (
-                <div className="absolute top-6 left-6 right-6 flex justify-between">
-                   <div className="glass px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest text-primary">IA Completada</div>
+                  <h2 className="font-headline font-bold text-2xl text-foreground">Escaneando...</h2>
+                  <p className="text-xs font-medium text-muted-foreground mt-2 opacity-80 leading-relaxed">Identificando ingredientes y porciones</p>
                 </div>
               )}
             </div>
 
-            <div className="space-y-6">
-              <div className="space-y-3 px-2">
-                <Label className="text-[10px] font-bold uppercase tracking-[0.3em] text-muted-foreground opacity-70">Identificación</Label>
+            <div className="space-y-6 pb-12">
+              <div className="space-y-2 px-2">
+                <Label className="text-[9px] font-bold uppercase tracking-[0.3em] text-muted-foreground opacity-70">Nombre del Plato</Label>
                 <Input 
-                  placeholder="Dale un nombre a tu plato..." 
-                  className="glass h-16 rounded-[1.5rem] text-xl font-bold px-6 border-white/10"
+                  placeholder="Ej. Ensalada César..." 
+                  className="glass h-14 rounded-2xl text-lg font-bold px-6 border-white/10"
                   value={mealName}
                   onChange={e => setMealName(e.target.value)}
                 />
               </div>
 
               {error && (
-                <Alert variant="destructive" className="rounded-[2rem] glass border-destructive/30 bg-destructive/10">
-                  <AlertCircle className="h-5 w-5" />
-                  <AlertTitle className="font-bold">IA con dudas</AlertTitle>
-                  <AlertDescription className="text-xs font-medium opacity-80">{error}</AlertDescription>
+                <Alert variant="destructive" className="rounded-[1.8rem] glass border-destructive/30 bg-destructive/10">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle className="text-xs font-bold">IA con dudas</AlertTitle>
+                  <AlertDescription className="text-[10px] font-medium opacity-80 leading-snug">{error}</AlertDescription>
                 </Alert>
               )}
 
               {analysisResult && (
-                <Card className="glass border-none shadow-2xl rounded-[3rem] overflow-hidden">
-                  <CardContent className="p-8 space-y-6">
+                <Card className="glass border-none shadow-2xl rounded-[2.5rem] overflow-hidden">
+                  <CardContent className="p-6 space-y-5">
                     <div className="flex items-center gap-3 text-primary">
-                      <Sparkles className="w-5 h-5 drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
-                      <span className="text-[10px] font-bold uppercase tracking-[0.3em] opacity-80">Estimación Nutricional</span>
+                      <Sparkles className="w-4 h-4" />
+                      <span className="text-[9px] font-bold uppercase tracking-[0.3em] opacity-80">Estimación Nutricional</span>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-3">
                       <NutrientBadge label="Calorías" value={Math.round(analysisResult.calories)} unit="kcal" color="text-primary" />
                       <NutrientBadge label="Proteínas" value={Math.round(analysisResult.protein)} unit="g" color="text-accent" />
-                      <NutrientBadge label="Carbohidratos" value={Math.round(analysisResult.carbohydrates)} unit="g" color="text-orange-500" />
+                      <NutrientBadge label="Carbos" value={Math.round(analysisResult.carbohydrates)} unit="g" color="text-orange-500" />
                       <NutrientBadge label="Grasas" value={Math.round(analysisResult.fats)} unit="g" color="text-emerald-500" />
                     </div>
                   </CardContent>
                 </Card>
               )}
 
-              <div className="flex gap-4 pt-4">
+              <div className="flex gap-4 pt-2 px-1">
                 <Button 
                   variant="outline" 
-                  className="flex-1 gap-2 h-16 rounded-[1.5rem] glass border-white/10 hover:bg-white/5 ios-btn font-bold"
+                  className="flex-1 gap-2 h-14 rounded-2xl glass border-white/10 hover:bg-white/5 ios-btn font-bold"
                   onClick={() => { setPhoto(null); setAnalysisResult(null); setMealName(''); }}
                   disabled={saving}
                 >
-                  <RefreshCw className="w-5 h-5" /> Reset
+                  <RefreshCw className="w-4 h-4" /> Reset
                 </Button>
                 <Button 
-                  className="flex-[2] bg-primary hover:bg-primary/90 text-white font-bold h-16 rounded-[1.5rem] shadow-2xl shadow-primary/30 ios-btn text-lg"
+                  className="flex-[2] bg-primary hover:bg-primary/90 text-white font-bold h-14 rounded-2xl shadow-2xl shadow-primary/30 ios-btn text-base"
                   onClick={saveMeal}
                   disabled={analyzing || saving || !photo}
                 >
-                  {saving ? <Loader2 className="w-6 h-6 animate-spin mr-2" /> : <CheckCircle className="w-6 h-6 mr-2" />}
-                  Confirmar Comida
+                  {saving ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <CheckCircle className="w-5 h-5 mr-2" />}
+                  Confirmar
                 </Button>
               </div>
             </div>
           </div>
         )}
       </main>
-      <BottomNav />
     </div>
   );
 }
 
 function NutrientBadge({ label, value, unit, color }: { label: string, value: number, unit: string, color: string }) {
   return (
-    <div className="glass bg-white/5 p-5 rounded-[1.8rem] border-white/5 flex flex-col items-center text-center">
-      <p className="text-[9px] text-muted-foreground uppercase font-bold tracking-widest mb-1.5 opacity-60">{label}</p>
-      <p className={`text-2xl font-bold ${color} tracking-tighter`}>{value}<span className="text-xs font-medium opacity-50 ml-0.5">{unit}</span></p>
+    <div className="glass bg-white/5 p-4 rounded-[1.5rem] border-white/5 flex flex-col items-center text-center">
+      <p className="text-[8px] text-muted-foreground uppercase font-bold tracking-widest mb-1 opacity-60">{label}</p>
+      <p className={`text-xl font-bold ${color} tracking-tighter`}>{value}<span className="text-[10px] font-medium opacity-50 ml-0.5">{unit}</span></p>
     </div>
   );
 }

@@ -11,31 +11,36 @@ export default function Landing() {
   const db = useFirestore();
   const router = useRouter();
 
-  // Cargamos el perfil solo si hay usuario
   const profileRef = useMemoFirebase(() => user ? doc(db, 'users', user.uid) : null, [db, user]);
   const { data: profile, isLoading: isProfileLoading } = useDoc<any>(profileRef);
 
-  const [debugMessages, setDebugMessages] = useState<string[]>([]);
+  const [checking, setChecking] = useState(true);
 
   useEffect(() => {
+    // Si la autenticación ha terminado de cargar
     if (!isUserLoading) {
       if (!user) {
-        // No hay sesión -> Mandar a Registro
+        // No hay usuario -> Registrarse
         router.push('/register');
-      } else if (!isProfileLoading) {
-        if (!profile) {
-          // Sesión iniciada pero sin datos físicos -> Onboarding
-          router.push('/onboarding');
-        } else {
-          // Todo listo -> Dashboard
-          router.push('/dashboard');
+        setChecking(false);
+      } else {
+        // Hay usuario, esperamos a que cargue el perfil antes de decidir
+        if (!isProfileLoading) {
+          if (!profile) {
+            // Usuario autenticado pero sin perfil en Firestore
+            router.push('/onboarding');
+          } else {
+            // Todo ok
+            router.push('/dashboard');
+          }
+          setChecking(false);
         }
       }
     }
   }, [user, isUserLoading, profile, isProfileLoading, router]);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-background p-6 space-y-6">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-background p-6 space-y-6 overflow-hidden h-screen">
       <div className="relative">
         <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full" />
         <div className="relative w-24 h-24 rounded-[2rem] bg-gradient-to-br from-primary to-accent flex items-center justify-center animate-bounce shadow-2xl shadow-primary/20">

@@ -5,15 +5,20 @@ import { usePathname } from 'next/navigation';
 import { Home, BarChart3, User, Heart, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUser } from '@/firebase';
+import { useEffect, useState } from 'react';
 
 export function BottomNav() {
   const pathname = usePathname();
   const { user } = useUser();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const hideOnPaths = ['/login', '/register', '/onboarding', '/forgot-password', '/'];
-  // Normalizar el pathname para comparaciones (quitar trailing slashes)
   const currentPath = pathname?.replace(/\/$/, '') || '/';
-  const shouldHide = hideOnPaths.includes(currentPath) || !user;
+  const shouldHide = !mounted || hideOnPaths.includes(currentPath) || !user;
 
   if (shouldHide) return null;
 
@@ -31,7 +36,6 @@ export function BottomNav() {
         {navItems.map((item) => {
           const Icon = item.icon;
           const itemPath = item.href.replace(/\/$/, '') || '/';
-          // El dashboard es un caso especial para la ruta raíz después del login
           const isActive = currentPath === itemPath || (itemPath !== '/dashboard' && currentPath.startsWith(itemPath));
           
           return (

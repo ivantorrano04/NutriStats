@@ -4,7 +4,6 @@
 
 @layer base {
   :root {
-    /* Modo Claro - Estilo Apple Esmerilado Premium */
     --background: 240 20% 98%;
     --foreground: 240 10% 4%;
     --card: 0 0% 100%;
@@ -26,14 +25,12 @@
     --ring: 217 91% 60%;
     --radius: 2.5rem;
     
-    /* Colores Líquidos para el fondo */
     --liquid-1: hsla(217, 91%, 60%, 0.12);
     --liquid-2: hsla(199, 89%, 48%, 0.12);
     --liquid-3: hsla(280, 89%, 60%, 0.08);
   }
 
   .dark {
-    /* Modo Oscuro - Deep Liquid Black (Estilo iPhone Pro) */
     --background: 240 10% 2%;
     --foreground: 0 0% 100%;
     --card: 240 10% 4%;
@@ -54,7 +51,6 @@
     --input: 240 10% 12%;
     --ring: 217 91% 60%;
     
-    /* Colores Líquidos modo oscuro - Más profundos */
     --liquid-1: hsla(217, 91%, 45%, 0.15);
     --liquid-2: hsla(199, 89%, 40%, 0.15);
     --liquid-3: hsla(280, 89%, 40%, 0.12);
@@ -66,7 +62,7 @@
     @apply border-border;
   }
   html {
-    font-size: 92%; /* Ajuste de escalado Retina */
+    font-size: 88%; 
     -webkit-text-size-adjust: 100%;
     overscroll-behavior: none;
     height: 100%;
@@ -84,7 +80,6 @@
   }
 }
 
-/* Efecto LiquidGlass Estilo iOS NATIVO */
 .glass {
   @apply backdrop-blur-[60px] border transition-all duration-300 ease-out;
   background: rgba(255, 255, 255, 0.75);
@@ -104,16 +99,10 @@
     inset 0 1px 1px 0 rgba(255, 255, 255, 0.05);
 }
 
-/* Interacciones Táctiles estilo iOS */
 .ios-btn {
   @apply active:scale-[0.96] transition-transform duration-200 select-none touch-none;
 }
 
-.ios-card-hover {
-  @apply hover:scale-[1.01] transition-transform duration-300;
-}
-
-/* Animaciones */
 @keyframes float {
   0% { transform: translateY(0px); }
   50% { transform: translateY(-10px); }
@@ -124,13 +113,11 @@
   animation: float 5s ease-in-out infinite;
 }
 
-/* Scrollbars Invisibles */
 ::-webkit-scrollbar {
   width: 0px;
   background: transparent;
 }
 
-/* Optimizaciones de Usabilidad */
 .safe-area-pt {
   padding-top: env(safe-area-inset-top, 20px);
 }

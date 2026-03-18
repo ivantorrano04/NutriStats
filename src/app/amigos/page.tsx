@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from 'react';
@@ -8,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, UserPlus, Check, X, Users, Activity, Utensils, ChevronRight, Flame } from 'lucide-react';
+import { Loader2, UserPlus, Check, X, Users, Activity, Utensils, ChevronRight, Flame, Clock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Friendship, UserProfile, MealRecord } from '@/lib/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
@@ -115,31 +114,31 @@ export default function AmigosPage() {
   if (isUserLoading) return <div className="flex h-screen items-center justify-center"><Loader2 className="animate-spin text-primary" /></div>;
 
   return (
-    <div className="min-h-screen bg-transparent pb-48">
-      <main className="max-w-2xl mx-auto px-6 pt-10 space-y-8">
+    <div className="min-h-screen bg-transparent pb-48 safe-area-pt">
+      <main className="max-w-xl mx-auto px-6 pt-6 space-y-6">
         <header className="space-y-1">
-          <h1 className="text-3xl font-headline font-bold text-primary">Comunidad NutriScan</h1>
-          <p className="text-muted-foreground">Conecta y comparte tu progreso con amigos</p>
+          <h1 className="text-2xl font-headline font-bold text-foreground tracking-tight">Comunidad</h1>
+          <p className="text-muted-foreground text-xs font-medium opacity-70">Conecta y celebra el progreso</p>
         </header>
 
-        <Card className="glass border-none shadow-xl">
-          <CardContent className="pt-6 space-y-4">
-            <div className="space-y-2">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Tu ID NutriScan</p>
+        <Card className="glass border-none shadow-xl rounded-[2.2rem]">
+          <CardContent className="p-5 space-y-4">
+            <div className="space-y-1.5 px-1">
+              <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Tu ID NutriScan</p>
               <div className="flex gap-2">
-                <code className="bg-secondary/50 p-3 rounded-xl flex-1 font-mono text-xs truncate select-all text-foreground">{user?.uid}</code>
-                <Button variant="secondary" className="rounded-xl ios-btn" onClick={() => { navigator.clipboard.writeText(user?.uid || ''); toast({ title: 'ID Copiado' }); }}>Copiar</Button>
+                <code className="bg-secondary/50 p-2.5 rounded-xl flex-1 font-mono text-[10px] truncate text-foreground border border-white/5">{user?.uid}</code>
+                <Button variant="secondary" size="sm" className="rounded-xl ios-btn h-9" onClick={() => { navigator.clipboard.writeText(user?.uid || ''); toast({ title: 'ID Copiado' }); }}>Copiar</Button>
               </div>
             </div>
             <div className="flex gap-2">
               <Input 
                 placeholder="Pega el ID de tu amigo..." 
-                className="glass rounded-xl text-foreground" 
+                className="glass rounded-xl text-foreground text-xs h-10 px-4" 
                 value={searchId}
                 onChange={e => setSearchId(e.target.value)}
               />
-              <Button onClick={sendRequest} disabled={searching || !searchId} className="rounded-xl bg-primary hover:bg-primary/90 ios-btn">
-                {searching ? <Loader2 className="animate-spin" /> : <UserPlus className="w-4 h-4 mr-2" />}
+              <Button onClick={sendRequest} disabled={searching || !searchId} className="rounded-xl bg-primary h-10 ios-btn text-xs px-4">
+                {searching ? <Loader2 className="animate-spin h-4 w-4" /> : <UserPlus className="w-4 h-4 mr-2" />}
                 Invitar
               </Button>
             </div>
@@ -147,61 +146,56 @@ export default function AmigosPage() {
         </Card>
 
         <Tabs defaultValue="friends" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 glass p-1 rounded-2xl">
-            <TabsTrigger value="friends" className="rounded-xl font-bold text-foreground">Amigos ({acceptedFriends.length})</TabsTrigger>
-            <TabsTrigger value="pending" className="rounded-xl font-bold text-foreground">Solicitudes ({pendingReceived.length})</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 glass p-1 rounded-2xl h-11">
+            <TabsTrigger value="friends" className="rounded-xl font-bold text-[11px]">Amigos ({acceptedFriends.length})</TabsTrigger>
+            <TabsTrigger value="pending" className="rounded-xl font-bold text-[11px]">Solicitudes ({pendingReceived.length})</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="friends" className="pt-6 space-y-4">
+          <TabsContent value="friends" className="pt-4 space-y-3">
             {acceptedFriends.length === 0 ? (
-              <div className="text-center py-20 opacity-50 bg-secondary/10 rounded-3xl border-2 border-dashed border-border">
-                <Users className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                <p className="font-medium text-foreground">¿Te sientes solo? ¡Invita a tu primer amigo!</p>
+              <div className="text-center py-16 glass rounded-[2.5rem] border-dashed border-border opacity-40">
+                <Users className="w-10 h-10 mx-auto mb-3 text-muted-foreground" />
+                <p className="text-sm font-medium">¡Invita a tu primer amigo!</p>
               </div>
             ) : (
               acceptedFriends.map(f => (
-                <Card key={f.friendId} className="glass border-none cursor-pointer hover:bg-white/5 dark:hover:bg-white/5 transition-all group overflow-hidden" onClick={() => setSelectedFriend(f.friendId)}>
-                  <CardContent className="p-4 flex justify-between items-center">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center font-bold text-white text-xl shadow-lg">
-                        {f.friendName.charAt(0)}
-                      </div>
-                      <div>
-                        <p className="font-bold text-lg text-foreground">{f.friendName}</p>
-                        <p className="text-[10px] text-accent font-bold uppercase tracking-wider">Ver actividad de hoy</p>
-                      </div>
+                <div key={f.friendId} className="glass p-3 rounded-[1.8rem] flex justify-between items-center ios-btn hover:bg-white/5 transition-colors border-white/5" onClick={() => setSelectedFriend(f.friendId)}>
+                  <div className="flex items-center gap-4">
+                    <div className="w-11 h-11 rounded-2xl bg-primary flex items-center justify-center font-bold text-white text-lg shadow-lg">
+                      {f.friendName.charAt(0)}
                     </div>
-                    <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-accent group-hover:translate-x-1 transition-all" />
-                  </CardContent>
-                </Card>
+                    <div>
+                      <p className="font-bold text-sm text-foreground">{f.friendName}</p>
+                      <p className="text-[9px] text-accent font-bold uppercase tracking-wider opacity-70">Ver actividad</p>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground opacity-40" />
+                </div>
               ))
             )}
           </TabsContent>
 
-          <TabsContent value="pending" className="pt-6 space-y-4">
+          <TabsContent value="pending" className="pt-4 space-y-3">
             {pendingReceived.length === 0 ? (
-              <div className="text-center py-20 opacity-30">
-                <UserPlus className="w-10 h-10 mx-auto mb-4 text-muted-foreground" />
-                <p className="text-foreground">Sin solicitudes pendientes.</p>
+              <div className="text-center py-16 opacity-30">
+                <p className="text-xs font-medium">Sin solicitudes pendientes.</p>
               </div>
             ) : (
               pendingReceived.map(f => (
-                <Card key={f.friendId} className="glass border-none">
-                  <CardContent className="p-4 flex justify-between items-center">
-                    <div className="flex items-center gap-3">
-                       <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center font-bold text-xs text-foreground">{f.friendName.charAt(0)}</div>
-                       <p className="font-bold text-foreground">{f.friendName}</p>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button size="icon" className="bg-emerald-500 hover:bg-emerald-600 h-9 w-9 rounded-xl ios-btn text-white" onClick={() => respondRequest(f.friendId, true)}>
-                        <Check className="h-4 w-4" />
-                      </Button>
-                      <Button size="icon" variant="destructive" className="h-9 w-9 rounded-xl ios-btn" onClick={() => respondRequest(f.friendId, false)}>
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                <div key={f.friendId} className="glass p-3 rounded-[1.8rem] flex justify-between items-center border-white/5">
+                  <div className="flex items-center gap-3">
+                     <div className="w-9 h-9 rounded-2xl bg-secondary flex items-center justify-center font-bold text-xs text-foreground">{f.friendName.charAt(0)}</div>
+                     <p className="font-bold text-sm text-foreground">{f.friendName}</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button size="icon" className="bg-emerald-500 hover:bg-emerald-600 h-9 w-9 rounded-xl ios-btn text-white" onClick={() => respondRequest(f.friendId, true)}>
+                      <Check className="h-4 w-4" />
+                    </Button>
+                    <Button size="icon" variant="destructive" className="h-9 w-9 rounded-xl ios-btn" onClick={() => respondRequest(f.friendId, false)}>
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
               ))
             )}
           </TabsContent>
@@ -251,7 +245,7 @@ function FriendViewModal({ friendId, onClose }: { friendId: string, onClose: () 
         read: false,
         createdAt: new Date().toISOString()
       });
-      toast({ title: '¡Reacción enviada! 🔥', description: `Has felicitado a ${profile.name}` });
+      toast({ title: '¡Reacción enviada! 🔥' });
     } catch (e) {
       console.error(e);
     } finally {
@@ -261,17 +255,17 @@ function FriendViewModal({ friendId, onClose }: { friendId: string, onClose: () 
 
   return (
     <Dialog open={!!friendId} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="bg-background dark:bg-card border-none sm:max-w-lg max-h-[85vh] overflow-y-auto p-0 gap-0 rounded-[3rem] shadow-[0_50px_100px_rgba(0,0,0,0.3)] dark:shadow-[0_50px_100px_rgba(0,0,0,0.6)] [&>button]:hidden">
-        <DialogHeader className="p-8 bg-background/95 dark:bg-card/95 sticky top-0 z-20 backdrop-blur-xl border-b border-border/50">
+      <DialogContent className="glass border-none max-w-sm max-h-[85vh] overflow-y-auto p-0 rounded-[3rem] shadow-2xl [&>button]:hidden">
+        <DialogHeader className="p-6 bg-background/50 backdrop-blur-3xl sticky top-0 z-20 border-b border-white/5">
           <div className="flex items-center justify-between w-full">
-            <DialogTitle className="text-2xl font-headline flex items-center gap-4">
-              <div className="w-16 h-16 rounded-2xl bg-primary flex items-center justify-center font-bold text-white text-3xl shadow-2xl shadow-primary/30">
+            <DialogTitle className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center font-bold text-white text-xl shadow-lg">
                 {profile?.name?.charAt(0)}
               </div>
-              <div className="text-left space-y-0.5">
-                <p className="font-bold text-2xl tracking-tight text-foreground">{profile?.name}</p>
-                <p className="text-[10px] font-bold text-muted-foreground flex items-center gap-1 uppercase tracking-widest opacity-70">
-                  <Activity className="w-3 h-3" /> Meta: {profile?.objetivo?.replace('_', ' ')}
+              <div className="text-left">
+                <p className="font-bold text-lg text-foreground truncate max-w-[140px]">{profile?.name}</p>
+                <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest opacity-60 flex items-center gap-1">
+                   Meta: {profile?.objetivo?.replace('_', ' ')}
                 </p>
               </div>
             </DialogTitle>
@@ -279,78 +273,73 @@ function FriendViewModal({ friendId, onClose }: { friendId: string, onClose: () 
               <Button 
                 size="icon" 
                 variant="secondary" 
-                className="rounded-full h-12 w-12 bg-orange-500/10 hover:bg-orange-500/20 text-orange-500 border border-orange-500/20 ios-btn shadow-lg"
+                className="rounded-2xl h-10 w-10 bg-orange-500/10 hover:bg-orange-500/20 text-orange-500 border border-orange-500/10 ios-btn"
                 onClick={handleSendFire}
                 disabled={reacting}
               >
-                {reacting ? <Loader2 className="animate-spin w-5 h-5" /> : <Flame className="w-6 h-6 fill-orange-500" />}
+                {reacting ? <Loader2 className="animate-spin w-4 h-4" /> : <Flame className="w-5 h-5 fill-orange-500" />}
               </Button>
               <DialogClose asChild>
-                <Button variant="ghost" size="icon" className="rounded-full h-12 w-12 hover:bg-secondary/80 ios-btn">
-                  <X className="w-6 h-6 text-foreground" />
+                <Button variant="ghost" size="icon" className="rounded-2xl h-10 w-10 hover:bg-secondary ios-btn">
+                  <X className="w-5 h-5 text-foreground" />
                 </Button>
               </DialogClose>
             </div>
           </div>
         </DialogHeader>
         
-        <div className="p-8 space-y-10">
-          {/* Tarjeta de Progreso Calórico */}
-          <section className="space-y-5">
+        <div className="p-6 space-y-8">
+          <section className="space-y-4">
             <div className="flex justify-between items-end px-1">
-              <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground opacity-80">Progreso Calórico</h3>
-              <span className="text-sm font-bold text-primary">{calPct.toFixed(0)}%</span>
+              <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-muted-foreground opacity-60">Consumo Hoy</p>
+              <span className="text-[10px] font-bold text-primary">{calPct.toFixed(0)}%</span>
             </div>
-            <div className="bg-secondary/30 dark:bg-white/5 p-8 rounded-[2.5rem] space-y-6 border border-border/50 dark:border-white/5 shadow-inner">
+            <div className="glass p-6 rounded-[2rem] space-y-4 border-white/5 shadow-inner">
               <div className="flex justify-between items-baseline">
                 <div>
-                  <span className="text-5xl font-headline font-bold tracking-tighter text-foreground">{consumed}</span>
-                  <span className="text-sm text-muted-foreground font-medium ml-2 opacity-60">/ {goal} kcal</span>
+                  <span className="text-4xl font-headline font-bold text-foreground tracking-tighter">{consumed}</span>
+                  <span className="text-[10px] text-muted-foreground font-medium ml-1.5 opacity-40">/ {goal} kcal</span>
                 </div>
                 {calPct >= 100 && (
-                  <div className="flex items-center gap-2 bg-orange-500/10 text-orange-500 px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest animate-bounce">
-                    <Flame className="w-3 h-3 fill-orange-500" /> ¡Meta!
+                  <div className="bg-orange-500/10 text-orange-500 px-3 py-1 rounded-full text-[8px] font-bold uppercase tracking-widest animate-pulse">
+                    ¡Meta!
                   </div>
                 )}
               </div>
-              <Progress value={calPct} className="h-4 bg-secondary/30 rounded-full" />
+              <Progress value={calPct} className="h-2.5 bg-secondary/30 rounded-full" />
             </div>
           </section>
 
-          {/* Diario de Comidas */}
-          <section className="space-y-6">
-            <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-3 px-1">
-              <Utensils className="w-3 h-3 text-accent" /> Diario de Comidas de Hoy
+          <section className="space-y-4">
+            <h3 className="text-[9px] font-bold uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2 px-1">
+              <Utensils className="w-3 h-3 text-accent" /> Diario de hoy
             </h3>
             {meals?.length === 0 ? (
-              <div className="text-center py-16 bg-secondary/20 dark:bg-white/5 rounded-[2.5rem] opacity-30 border-dashed border-2 border-border/50">
-                <p className="text-sm font-medium text-foreground">Aún no hay registros hoy.</p>
+              <div className="text-center py-10 glass rounded-[2rem] opacity-30 border-dashed border border-border">
+                <p className="text-xs font-medium">Sin registros hoy.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 gap-5">
+              <div className="space-y-3">
                 {meals?.map(m => (
-                  <Card key={m.id} className="bg-white dark:bg-white/5 border border-border/50 dark:border-none overflow-hidden hover:bg-secondary/10 dark:hover:bg-white/10 transition-all shadow-lg group rounded-[2rem]">
+                  <Card key={m.id} className="glass border-none overflow-hidden hover:bg-white/5 transition-all border-white/5 rounded-[1.8rem]">
                     <div className="flex items-center">
-                      <div className="w-32 h-32 sm:w-40 sm:h-40 bg-secondary/20 shrink-0 relative overflow-hidden">
+                      <div className="w-20 h-20 bg-secondary/30 shrink-0 relative overflow-hidden">
                         {m.photoDataUri ? (
-                          <img src={m.photoDataUri} alt={m.mealType} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                          <img src={m.photoDataUri} alt="" className="w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center opacity-10">
-                            <Utensils className="w-10 h-10 text-foreground" />
+                            <Utensils className="w-6 h-6" />
                           </div>
                         )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
                       </div>
-                      <div className="p-6 flex-1 flex flex-col justify-between h-full min-w-0">
-                        <div className="space-y-1">
-                          <p className="font-bold text-xl leading-tight truncate text-foreground">{m.mealType}</p>
-                          <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest opacity-60">
-                            {new Date(m.logDateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </p>
+                      <div className="p-4 flex-1 min-w-0">
+                        <div className="flex justify-between items-start mb-1">
+                           <p className="font-bold text-sm text-foreground truncate">{m.mealType}</p>
+                           <span className="text-[8px] font-bold opacity-30 flex items-center gap-0.5"><Clock className="w-2 h-2" /> {new Date(m.logDateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                         </div>
-                        <div className="flex justify-between items-center mt-6">
-                          <span className="text-lg font-bold text-primary tracking-tight">{m.totalCalories} kcal</span>
-                          <div className="flex gap-4 text-[10px] font-bold uppercase text-muted-foreground opacity-70">
+                        <div className="flex justify-between items-center mt-2">
+                          <span className="text-xs font-bold text-primary">{m.totalCalories} <span className="text-[8px] opacity-50">kcal</span></span>
+                          <div className="flex gap-2 text-[8px] font-bold uppercase opacity-50">
                             <span>P:{m.totalProteins}g</span>
                             <span>C:{m.totalCarbohydrates}g</span>
                           </div>
@@ -363,16 +352,15 @@ function FriendViewModal({ friendId, onClose }: { friendId: string, onClose: () 
             )}
           </section>
 
-          {/* Métricas Adicionales */}
-          <div className="grid grid-cols-2 gap-5 pb-12">
-             <Card className="bg-secondary/20 dark:bg-card/50 border-none p-6 space-y-2 shadow-inner rounded-[2rem]">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground opacity-60">Peso Actual</p>
-                <p className="text-2xl font-bold tracking-tight text-foreground">{profile?.peso || '--'} kg</p>
-             </Card>
-             <Card className="bg-secondary/20 dark:bg-card/50 border-none p-6 space-y-2 shadow-inner rounded-[2rem]">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground opacity-60">Actividad</p>
-                <p className="text-2xl font-bold tracking-tight capitalize truncate text-foreground">{profile?.actividad?.replace('_', ' ')}</p>
-             </Card>
+          <div className="grid grid-cols-2 gap-3 pb-8">
+             <div className="glass p-4 space-y-1 rounded-[1.5rem] border-white/5 text-center">
+                <p className="text-[8px] font-bold uppercase tracking-widest text-muted-foreground opacity-50">Peso</p>
+                <p className="text-lg font-bold text-foreground">{profile?.peso || '--'} <span className="text-[9px] opacity-40">kg</span></p>
+             </div>
+             <div className="glass p-4 space-y-1 rounded-[1.5rem] border-white/5 text-center">
+                <p className="text-[8px] font-bold uppercase tracking-widest text-muted-foreground opacity-50">Actividad</p>
+                <p className="text-[11px] font-bold text-foreground truncate capitalize">{profile?.actividad?.replace('_', ' ')}</p>
+             </div>
           </div>
         </div>
       </DialogContent>
