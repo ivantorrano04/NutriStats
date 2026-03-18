@@ -1,4 +1,3 @@
-'use server';
 /**
  * @fileOverview A Genkit flow for analyzing a meal photo to estimate its nutritional content.
  */

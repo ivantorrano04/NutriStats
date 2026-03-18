@@ -1,4 +1,3 @@
-'use server';
 /**
  * @fileOverview Un generador de recetas táctico que optimiza tus macros restantes.
  */

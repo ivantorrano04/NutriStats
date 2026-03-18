@@ -12,8 +12,8 @@ import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { UserProfile, MealRecord, Intensity, Friendship } from '@/lib/types';
 import { setDocumentNonBlocking, addDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { getNutritionalAdvice, AdvisorOutput } from '@/ai/flows/nutritional-advisor';
-import { suggestMeal, SuggestMealOutput } from '@/ai/flows/meal-suggestion-flow';
+import type { AdvisorOutput } from '@/ai/flows/nutritional-advisor';
+import type { SuggestMealOutput } from '@/ai/flows/meal-suggestion-flow';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
@@ -179,27 +179,53 @@ export default function DashboardPage() {
   const fetchAdvice = async () => {
     setLoadingAdvice(true);
     try {
-      const res = await getNutritionalAdvice({
-        nombre: profile.name || 'Usuario',
-        objetivo: profile.objetivo || 'perder_grasa',
-        peso: profile.peso || 70,
-        consumo: { cal: consumed.cal, prot: consumed.prot, carb: consumed.carb, fat: consumed.fat },
-        metas: { cal: profile.calorieGoal || 2000, prot: profile.proteinGoalGrams || 150, carb: profile.carbohydrateGoalGrams || 200, fat: profile.fatGoalGrams || 60 }
+      const payload = {
+        flow: 'advisor',
+        input: {
+          nombre: profile.name || 'Usuario',
+          objetivo: profile.objetivo || 'perder_grasa',
+          peso: profile.peso || 70,
+          consumo: { cal: consumed.cal, prot: consumed.prot, carb: consumed.carb, fat: consumed.fat },
+          metas: { cal: profile.calorieGoal || 2000, prot: profile.proteinGoalGrams || 150, carb: profile.carbohydrateGoalGrams || 200, fat: profile.fatGoalGrams || 60 }
+        }
+      };
+
+      const res = await fetch('/api/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
       });
-      setAdvice(res);
+
+      if (!res.ok) throw new Error('AI service error');
+
+      const data: AdvisorOutput = await res.json();
+      setAdvice(data);
     } catch (e) { console.error(e); } finally { setLoadingAdvice(false); }
   };
 
   const fetchMealSuggestion = async () => {
     setLoadingSuggestion(true);
     try {
-      const res = await suggestMeal({
-        remainingCal: remaining.cal,
-        remainingProt: remaining.prot,
-        remainingCarb: remaining.carb,
-        remainingFat: remaining.fat
+      const payload = {
+        flow: 'suggest',
+        input: {
+          remainingCal: remaining.cal,
+          remainingProt: remaining.prot,
+          remainingCarb: remaining.carb,
+          remainingFat: remaining.fat
+        }
+      };
+
+      const res = await fetch('/api/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
       });
-      setMealSuggestion(res);
+
+      if (!res.ok) throw new Error('AI service error');
+
+      const data: SuggestMealOutput = await res.json();
+      setMealSuggestion(data);
     } catch (e) { console.error(e); } finally { setLoadingSuggestion(false); }
   };
 

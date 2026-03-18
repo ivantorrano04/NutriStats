@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Camera, Loader2, Sparkles, CheckCircle, AlertCircle, RefreshCw, ChevronLeft } from 'lucide-react';
-import { analyzeMealPhotoForNutrients } from '@/ai/flows/analyze-meal-photo-for-nutrients';
+import type { AnalyzeMealPhotoForNutrientsOutput } from '@/ai/flows/analyze-meal-photo-for-nutrients';
 import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
@@ -50,10 +50,23 @@ export default function RegistrarPage() {
     setAnalyzing(true);
     setError(null);
     try {
-      const result = await analyzeMealPhotoForNutrients({ 
-        photoDataUri: dataUri,
-        mealDescription: mealName 
+      const payload = {
+        flow: 'analyze',
+        input: {
+          photoDataUri: dataUri,
+          mealDescription: mealName
+        }
+      };
+
+      const res = await fetch('/api/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
       });
+
+      if (!res.ok) throw new Error('AI service error');
+
+      const result: AnalyzeMealPhotoForNutrientsOutput = await res.json();
       setAnalysisResult(result);
       if (!mealName) setMealName("Nueva Comida");
     } catch (err) {

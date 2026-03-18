@@ -1,4 +1,3 @@
-'use server';
 /**
  * @fileOverview Un asesor nutricional de élite impulsado por IA.
  */
