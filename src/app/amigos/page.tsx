@@ -161,7 +161,7 @@ export default function AmigosPage() {
               </div>
             ) : (
               acceptedFriends.map(f => (
-                <Card key={f.friendId} className="glass border-none cursor-pointer hover:bg-white/5 transition-all group overflow-hidden" onClick={() => setSelectedFriend(f.friendId)}>
+                <Card key={f.friendId} className="glass border-none cursor-pointer hover:bg-white/5 dark:hover:bg-white/5 transition-all group overflow-hidden" onClick={() => setSelectedFriend(f.friendId)}>
                   <CardContent className="p-4 flex justify-between items-center">
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center font-bold text-white text-xl shadow-lg">

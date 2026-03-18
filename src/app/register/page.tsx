@@ -55,37 +55,36 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-6 relative overflow-hidden">
-      {/* Elementos decorativos de fondo */}
-      <div className="absolute top-[-15%] right-[-15%] w-[50%] h-[50%] bg-primary/20 blur-[150px] rounded-full animate-pulse" />
-      <div className="absolute bottom-[-15%] left-[-15%] w-[50%] h-[50%] bg-accent/20 blur-[150px] rounded-full animate-pulse" style={{ animationDelay: '3s' }} />
+      <div className="absolute top-[-15%] right-[-15%] w-[60%] h-[60%] bg-primary/20 blur-[150px] rounded-full animate-pulse" />
+      <div className="absolute bottom-[-15%] left-[-15%] w-[60%] h-[60%] bg-accent/20 blur-[150px] rounded-full animate-pulse" style={{ animationDelay: '3s' }} />
 
       <div className="w-full max-w-md relative z-10 space-y-8">
         <div className="text-center space-y-2 animate-in fade-in slide-in-from-top-4 duration-1000">
-          <div className="mx-auto w-20 h-20 rounded-[2.5rem] bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-2xl shadow-primary/30 animate-float">
-            <Sparkles className="text-white w-10 h-10" />
+          <div className="mx-auto w-24 h-24 rounded-[2.5rem] bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-2xl shadow-primary/30 animate-float">
+            <Sparkles className="text-white w-12 h-12" />
           </div>
           <h1 className="text-5xl font-headline font-bold tracking-tighter text-foreground pt-4">NutriScan</h1>
-          <p className="text-muted-foreground font-medium">Tu nueva vida comienza aquí</p>
+          <p className="text-muted-foreground font-medium text-lg">Crea tu perfil inteligente</p>
         </div>
 
-        <Card className="glass border-none shadow-[0_50px_100px_rgba(0,0,0,0.4)] rounded-[3rem] overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200">
-          <CardHeader className="space-y-1 pb-2">
+        <Card className="glass border-none shadow-[0_50px_100px_rgba(0,0,0,0.3)] dark:shadow-[0_50px_100px_rgba(0,0,0,0.5)] rounded-[3.5rem] overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200">
+          <CardHeader className="space-y-1 pb-2 pt-10 px-10">
             <div className="flex items-center gap-2 mb-2">
               <ShieldCheck className="w-5 h-5 text-emerald-500" />
-              <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-emerald-500">Cuenta Protegida</span>
+              <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-emerald-500">Privacidad Garantizada</span>
             </div>
-            <CardTitle className="text-2xl font-headline font-bold">Registro</CardTitle>
-            <CardDescription className="text-xs font-medium opacity-70">Únete a la comunidad de biohacking nutricional</CardDescription>
+            <CardTitle className="text-3xl font-headline font-bold">Unirse</CardTitle>
+            <CardDescription className="text-sm font-medium opacity-70">Empieza tu seguimiento en segundos</CardDescription>
           </CardHeader>
           <form onSubmit={handleRegister}>
-            <CardContent className="space-y-5">
+            <CardContent className="space-y-6 px-10 pb-8">
               <div className="space-y-2">
                 <Label className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground px-1">Nombre Completo</Label>
                 <div className="relative group">
                   <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground transition-colors group-focus-within:text-primary" />
                   <Input 
                     placeholder="Ej. Iván Guerrero" 
-                    className="glass pl-12 h-14 rounded-2xl border-white/5 focus:border-primary/50 transition-all text-lg font-medium" 
+                    className="glass pl-12 h-16 rounded-2xl border-white/10 focus:border-primary/50 transition-all text-lg font-medium" 
                     value={name}
                     onChange={e => setName(e.target.value)}
                     required
@@ -99,7 +98,7 @@ export default function RegisterPage() {
                   <Input 
                     type="email" 
                     placeholder="tu@email.com" 
-                    className="glass pl-12 h-14 rounded-2xl border-white/5 focus:border-primary/50 transition-all text-lg font-medium" 
+                    className="glass pl-12 h-16 rounded-2xl border-white/10 focus:border-primary/50 transition-all text-lg font-medium" 
                     value={email}
                     onChange={e => setEmail(e.target.value)}
                     required
@@ -113,7 +112,7 @@ export default function RegisterPage() {
                   <Input 
                     type="password" 
                     placeholder="Mínimo 6 caracteres" 
-                    className="glass pl-12 h-14 rounded-2xl border-white/5 focus:border-primary/50 transition-all text-lg font-medium" 
+                    className="glass pl-12 h-16 rounded-2xl border-white/10 focus:border-primary/50 transition-all text-lg font-medium" 
                     value={password}
                     onChange={e => setPassword(e.target.value)}
                     required
@@ -123,23 +122,23 @@ export default function RegisterPage() {
               </div>
               <Button 
                 type="submit"
-                className="w-full h-16 text-xl font-bold bg-primary hover:bg-primary/90 mt-6 rounded-[1.5rem] shadow-2xl shadow-primary/30 group ios-btn transition-all relative overflow-hidden" 
+                className="w-full h-18 text-xl font-bold bg-primary hover:bg-primary/90 mt-4 rounded-[2rem] shadow-2xl shadow-primary/30 group ios-btn transition-all py-8" 
                 disabled={loading}
               >
                 {loading ? (
                   <Loader2 className="animate-spin mr-2" />
                 ) : (
                   <>
-                    <span>Empezar Gratis</span>
+                    <span>Crear mi Cuenta</span>
                     <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
                   </>
                 )}
               </Button>
             </CardContent>
           </form>
-          <CardFooter className="flex flex-col gap-4 border-t border-white/5 pt-8 pb-10">
+          <CardFooter className="flex flex-col gap-4 border-t border-white/10 pt-8 pb-10">
             <p className="text-sm text-muted-foreground font-medium">
-              ¿Ya eres usuario? <Link href="/login" className="text-primary font-bold hover:text-accent transition-colors hover:underline underline-offset-4">Inicia sesión</Link>
+              ¿Ya estás con nosotros? <Link href="/login" className="text-primary font-bold hover:text-accent transition-colors hover:underline underline-offset-4">Inicia sesión</Link>
             </p>
           </CardFooter>
         </Card>

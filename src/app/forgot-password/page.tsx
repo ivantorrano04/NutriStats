@@ -24,6 +24,7 @@ export default function ForgotPasswordPage() {
     if (!email) return;
     setLoading(true);
     try {
+      // ESTE ES EL MÉTODO REAL DE FIREBASE QUE ENVÍA EL CORREO
       await sendPasswordResetEmail(auth, email);
       setSent(true);
       toast({
@@ -48,20 +49,20 @@ export default function ForgotPasswordPage() {
       
       <div className="w-full max-w-md relative z-10 space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-1000">
         <div className="text-center space-y-2">
-          <div className="mx-auto w-20 h-20 rounded-[2rem] bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-2xl shadow-primary/30 animate-float">
-            <Sparkles className="text-white w-10 h-10" />
+          <div className="mx-auto w-24 h-24 rounded-[2.5rem] bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-2xl shadow-primary/30 animate-float">
+            <Sparkles className="text-white w-12 h-12" />
           </div>
-          <h1 className="text-4xl font-headline font-bold tracking-tighter text-foreground pt-4">NutriScan</h1>
-          <p className="text-muted-foreground font-medium">Recuperar acceso</p>
+          <h1 className="text-5xl font-headline font-bold tracking-tighter text-foreground pt-4">NutriScan</h1>
+          <p className="text-muted-foreground font-medium text-lg">Recuperar acceso</p>
         </div>
 
-        <Card className="glass border-none shadow-[0_50px_100px_rgba(0,0,0,0.4)] rounded-[3rem] overflow-hidden">
-          <CardHeader className="text-center space-y-1">
-            <CardTitle className="text-2xl font-headline font-bold">Contraseña</CardTitle>
-            <CardDescription className="text-xs font-medium opacity-70">Te enviaremos un enlace de recuperación</CardDescription>
+        <Card className="glass border-none shadow-[0_50px_100px_rgba(0,0,0,0.3)] dark:shadow-[0_50px_100px_rgba(0,0,0,0.5)] rounded-[3.5rem] overflow-hidden">
+          <CardHeader className="text-center space-y-1 pt-10 px-10">
+            <CardTitle className="text-3xl font-headline font-bold">Contraseña</CardTitle>
+            <CardDescription className="text-sm font-medium opacity-70">Te enviaremos un enlace seguro</CardDescription>
           </CardHeader>
           
-          <CardContent className="space-y-4 pt-4">
+          <CardContent className="space-y-4 pt-4 px-10 pb-8">
             {!sent ? (
               <form onSubmit={handleReset} className="space-y-6">
                 <div className="space-y-2">
@@ -71,7 +72,7 @@ export default function ForgotPasswordPage() {
                     <Input 
                       type="email" 
                       placeholder="tu@email.com" 
-                      className="glass pl-12 h-14 rounded-2xl border-white/5 focus:border-primary/50 transition-all text-lg font-medium" 
+                      className="glass pl-12 h-16 rounded-2xl border-white/10 focus:border-primary/50 transition-all text-lg font-medium" 
                       value={email}
                       onChange={e => setEmail(e.target.value)}
                       required
@@ -80,7 +81,7 @@ export default function ForgotPasswordPage() {
                 </div>
                 <Button 
                   type="submit"
-                  className="w-full h-16 text-xl font-bold bg-primary hover:bg-primary/90 rounded-[1.5rem] shadow-2xl shadow-primary/30 ios-btn" 
+                  className="w-full h-18 text-xl font-bold bg-primary hover:bg-primary/90 rounded-[2rem] shadow-2xl shadow-primary/30 ios-btn py-8" 
                   disabled={loading}
                 >
                   {loading ? <Loader2 className="animate-spin mr-2" /> : 'Enviar Enlace'}
@@ -88,20 +89,20 @@ export default function ForgotPasswordPage() {
               </form>
             ) : (
               <div className="text-center py-6 space-y-6 animate-in zoom-in-95 duration-500">
-                <div className="mx-auto w-20 h-20 bg-emerald-500/20 rounded-[2rem] flex items-center justify-center shadow-xl shadow-emerald-500/10">
-                  <CheckCircle2 className="text-emerald-500 w-10 h-10" />
+                <div className="mx-auto w-24 h-24 bg-emerald-500/20 rounded-[2.5rem] flex items-center justify-center shadow-xl shadow-emerald-500/10">
+                  <CheckCircle2 className="text-emerald-500 w-12 h-12" />
                 </div>
                 <div className="space-y-3">
-                  <h3 className="text-2xl font-bold font-headline">¡Enviado!</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed font-medium px-4">
-                    Revisa la bandeja de entrada de <strong>{email}</strong> y sigue las instrucciones.
+                  <h3 className="text-3xl font-bold font-headline">¡Enviado!</h3>
+                  <p className="text-lg text-muted-foreground leading-relaxed font-medium px-4">
+                    Revisa la bandeja de entrada de <strong>{email}</strong>.
                   </p>
                 </div>
               </div>
             )}
           </CardContent>
 
-          <CardFooter className="flex justify-center border-t border-white/5 pt-8 pb-10">
+          <CardFooter className="flex justify-center border-t border-white/10 pt-8 pb-10">
             <Link href="/login" className="flex items-center gap-2 text-sm text-primary font-bold hover:text-accent transition-colors hover:underline">
               <ArrowLeft className="w-4 h-4" /> Volver al inicio
             </Link>

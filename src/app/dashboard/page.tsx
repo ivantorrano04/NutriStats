@@ -78,7 +78,7 @@ export default function DashboardPage() {
         const mealsPromises = friendsData.map(async (friend) => {
           const mSnap = await getDocs(query(
             collection(db, 'users', friend.friendId, 'mealLogs'),
-            where('logDateTime', '>=', todayDate),
+            where('logDateTime', '>=', todayDate), // SOLO HOY
             orderBy('logDateTime', 'desc'),
             limit(1)
           ));
