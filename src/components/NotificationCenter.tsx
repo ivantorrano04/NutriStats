@@ -4,16 +4,18 @@ import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebas
 import { collection, query, orderBy, limit, doc, writeBatch } from 'firebase/firestore';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Bell, BellDot, CheckCheck, Inbox, Info, Sparkles, Trophy, AlertTriangle, Flame } from 'lucide-react';
+import { Bell, BellDot, CheckCheck, Inbox, Info, Sparkles, Trophy, AlertTriangle, Flame, Trash2 } from 'lucide-react';
 import { AppNotification } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { useToast } from '@/hooks/use-toast';
 
 export function NotificationCenter() {
   const { user } = useUser();
   const db = useFirestore();
+  const { toast } = useToast();
 
   const notificationsQuery = useMemoFirebase(() => user ? query(
     collection(db, 'users', user.uid, 'notifications'),
@@ -35,6 +37,26 @@ export function NotificationCenter() {
       batch.update(ref, { read: true });
     });
     await batch.commit();
+  };
+
+  const clearAllNotifications = async () => {
+    if (!user || !notifications || notifications.length === 0) return;
+    
+    const batch = writeBatch(db);
+    notifications.forEach(n => {
+      const ref = doc(db, 'users', user.uid, 'notifications', n.id);
+      batch.delete(ref);
+    });
+    
+    try {
+      await batch.commit();
+      toast({
+        title: "Bandeja vacía",
+        description: "Se han eliminado todas las notificaciones.",
+      });
+    } catch (e) {
+      console.error("Error al limpiar notificaciones:", e);
+    }
   };
 
   const markAsRead = (id: string) => {
@@ -69,16 +91,25 @@ export function NotificationCenter() {
         </Button>
       </SheetTrigger>
       <SheetContent className="glass border-l border-border/50 sm:max-w-md">
-        <SheetHeader className="flex flex-row items-center justify-between pb-6 space-y-0">
-          <SheetTitle className="text-2xl font-headline font-bold">Notificaciones</SheetTitle>
-          {unreadCount > 0 && (
-            <Button variant="ghost" size="sm" onClick={markAllAsRead} className="text-xs text-primary hover:text-primary/80">
-              <CheckCheck className="w-3 h-3 mr-1" /> Leer todas
-            </Button>
-          )}
+        <SheetHeader className="flex flex-col pb-6 space-y-4">
+          <div className="flex items-center justify-between w-full">
+            <SheetTitle className="text-2xl font-headline font-bold">Notificaciones</SheetTitle>
+            <div className="flex gap-2">
+              {unreadCount > 0 && (
+                <Button variant="ghost" size="sm" onClick={markAllAsRead} className="text-[10px] font-bold text-primary hover:bg-primary/10 h-8 rounded-xl px-2">
+                  <CheckCheck className="w-3 h-3 mr-1" /> Leer todas
+                </Button>
+              )}
+              {notifications && notifications.length > 0 && (
+                <Button variant="ghost" size="sm" onClick={clearAllNotifications} className="text-[10px] font-bold text-destructive hover:bg-destructive/10 h-8 rounded-xl px-2">
+                  <Trash2 className="w-3 h-3 mr-1" /> Limpiar
+                </Button>
+              )}
+            </div>
+          </div>
         </SheetHeader>
 
-        <div className="space-y-4 overflow-y-auto max-h-[calc(100vh-120px)] pr-2">
+        <div className="space-y-4 overflow-y-auto max-h-[calc(100vh-160px)] pr-2">
           {notifications?.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-center space-y-4 opacity-50">
               <Inbox className="w-12 h-12 text-muted-foreground" />
