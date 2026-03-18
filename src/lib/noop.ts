@@ -1,32 +1,21 @@
 /**
- * @fileOverview Universal Proxy Shim.
+ * @fileOverview Universal Proxy Shim Pro.
  * Este archivo actúa como un sustituto universal para módulos de Node.js en el cliente.
  * Proporciona un objeto Proxy que puede actuar como función, constructor u objeto,
- * e incluye exportaciones nombradas para satisfacer desestructuraciones estáticas en Turbopack.
+ * e incluye todas las exportaciones nombradas requeridas por las dependencias de Genkit y Firebase.
  */
 
 const noop = function() {};
 
-// Handler del Proxy para interceptar cualquier acceso y retornar el mismo proxy
 const handler: ProxyHandler<any> = {
   get: (target, prop) => {
     if (prop === 'default') return proxy;
     if (prop === '__esModule') return true;
-    
-    // Soporte para objetos anidados comunes
     if (prop === 'constants' || prop === 'promises' || prop === 'codes') return proxy;
-
-    // Soporte para primitivos
     if (prop === Symbol.toPrimitive) {
-      return (hint: string) => {
-        if (hint === 'number') return 0;
-        return 'noop';
-      };
+      return (hint: string) => (hint === 'number' ? 0 : 'noop');
     }
-    
     if (prop === 'toString' || prop === Symbol.toStringTag) return () => 'noop';
-    
-    // Retornar el mismo proxy para permitir encadenamiento infinito
     return proxy;
   },
   apply: () => proxy,
@@ -35,9 +24,9 @@ const handler: ProxyHandler<any> = {
 
 const proxy: any = new Proxy(noop, handler);
 
-// --- Exportaciones Nombradas para desestructuraciones estáticas (Turbopack/ESM) ---
+// --- Exportaciones Nombradas para Análisis Estático (Turbopack) ---
 
-// http / https / http2 / net / tls
+// http / https / http2 / net / tls / dns
 export const Agent = proxy;
 export const get = proxy;
 export const request = proxy;
@@ -48,8 +37,12 @@ export const createConnection = proxy;
 export const isIP = proxy;
 export const isIPv4 = proxy;
 export const isIPv6 = proxy;
+export const lookup = proxy;
+export const resolve4 = proxy;
+export const resolve6 = proxy;
+export const TLSSocket = proxy;
 
-// http2 specific constants
+// Constantes de red comunes
 export const HTTP2_HEADER_AUTHORITY = ':authority';
 export const HTTP2_HEADER_METHOD = ':method';
 export const HTTP2_HEADER_PATH = ':path';
@@ -63,6 +56,7 @@ export const createHash = proxy;
 export const createHmac = proxy;
 export const pbkdf2 = proxy;
 export const pbkdf2Sync = proxy;
+export const getSubtle = proxy;
 
 // events & stream
 export const EventEmitter = proxy;
@@ -117,6 +111,7 @@ export const lstatSync = proxy;
 export const readdirSync = proxy;
 export const createReadStream = proxy;
 export const createWriteStream = proxy;
+export const accessSync = proxy;
 
 // os
 export const homedir = () => '/';
@@ -161,14 +156,17 @@ export const performance = proxy;
 
 // async_hooks
 export const AsyncLocalStorage = proxy;
+export const AsyncResource = proxy;
 
 // process
 export const nextTick = (fn: Function) => setTimeout(fn, 0);
 export const env = {};
 export const argv = [];
 export const version = 'v18.0.0';
-export const stdout = proxy;
-export const stderr = proxy;
-export const stdin = proxy;
+export const stdout = { isTTY: false, write: proxy, on: proxy };
+export const stderr = { isTTY: false, write: proxy, on: proxy };
+export const stdin = { isTTY: false, read: proxy, on: proxy };
+export const pid = 1;
+export const cwd = () => '/';
 
 export default proxy;
