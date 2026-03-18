@@ -1,24 +1,24 @@
-
 import type {NextConfig} from 'next';
 import path from 'path';
 
 /**
- * Configuración de Next.js optimizada para exportación estática (Capacitor/Mobile).
- * Maneja la sustitución de módulos de Node.js mediante un Universal Shim.
+ * Configuración maestra para Capacitor / Exportación Estática.
+ * Redirige TODOS los módulos de Node.js al Shim Universal para evitar errores de compilación.
  */
 
+// Usamos ruta relativa para que Turbopack no falle al resolver
 const noopPath = './src/lib/noop.ts';
 const nodeModules = [
-  'fs', 'fs/promises', 'path', 'util', 'util/types', 'events', 'stream', 'stream/promises', 'crypto', 'os', 'http', 'https', 
-  'zlib', 'process', 'express', 'get-port', 'child_process', 'net', 'tls', 
-  'dns', 'http2', 'readline', 'vm', 'buffer', 'dgram', 'perf_hooks', 'async_hooks',
-  'url', 'querystring', 'string_decoder', 'timers'
+  'fs', 'path', 'util', 'events', 'stream', 'crypto', 'os', 'http', 'https', 'zlib', 
+  'process', 'child_process', 'net', 'tls', 'dns', 'http2', 'url', 'buffer', 'vm', 
+  'perf_hooks', 'async_hooks', 'readline', 'querystring', 'string_decoder', 'timers'
 ];
 
-// Generar alias para Turbopack
 const turboAliases = nodeModules.reduce((acc, mod) => {
   acc[mod] = noopPath;
   acc[`node:${mod}`] = noopPath;
+  // Sub-rutas comunes requeridas por Genkit y OTel
+  acc[`${mod}/promises`] = noopPath;
   return acc;
 }, {} as Record<string, string>);
 
@@ -27,26 +27,6 @@ const nextConfig: NextConfig = {
   trailingSlash: true,
   images: {
     unoptimized: true,
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'placehold.co',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'images.unsplash.com',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'picsum.photos',
-        port: '',
-        pathname: '/**',
-      },
-    ],
   },
   typescript: {
     ignoreBuildErrors: true,
@@ -61,29 +41,18 @@ const nextConfig: NextConfig = {
   },
   webpack: (config, { isServer }) => {
     if (!isServer) {
+      // Para Webpack (SSR parcial) seguimos usando el path absoluto para seguridad
       const absoluteNoopPath = path.resolve(process.cwd(), 'src/lib/noop.ts');
-      
       nodeModules.forEach(mod => {
         config.resolve.alias[mod] = absoluteNoopPath;
         config.resolve.alias[`node:${mod}`] = absoluteNoopPath;
+        config.resolve.alias[`${mod}/promises`] = absoluteNoopPath;
       });
-
       config.resolve.fallback = {
         ...config.resolve.fallback,
         fs: false,
-        path: false,
-        util: false,
-        events: false,
-        stream: false,
-        crypto: false,
-        os: false,
-        http: false,
-        https: false,
-        zlib: false,
-        process: false,
         net: false,
         tls: false,
-        dns: false,
         child_process: false,
       };
     }

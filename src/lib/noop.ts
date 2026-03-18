@@ -1,187 +1,142 @@
-
 /**
- * @fileOverview Universal Proxy Shim Pro.
- * Este archivo actúa como un sustituto universal para módulos de Node.js en el cliente.
- * Proporciona un objeto Proxy que puede actuar como función, constructor u objeto,
- * e incluye todas las exportaciones nombradas requeridas por las dependencias de Genkit y Firebase.
+ * @fileOverview Universal Proxy Shim Maestro v2.
+ * Proporciona compatibilidad absoluta para dependencias de servidor en entornos estáticos.
+ * Soporta herencia de clases y utilidades de rutas avanzadas para Turbopack.
  */
 
-const noop = function() {};
+// Clases base reales para permitir 'extends'
+class NoopEventEmitter {
+  on() { return this; }
+  once() { return this; }
+  off() { return this; }
+  emit() { return true; }
+  removeListener() { return this; }
+  removeAllListeners() { return this; }
+  setMaxListeners() { return this; }
+}
+
+class NoopStream extends NoopEventEmitter {}
+
+const noop = () => {};
+const asyncNoop = async () => {};
+
+// Objeto base para el shim
+const baseShim: any = {
+  env: { NODE_ENV: 'production' },
+  argv: [],
+  version: 'v18.0.0',
+  nextTick: (fn: Function) => setTimeout(fn, 0),
+  stdout: { isTTY: false, write: noop, on: noop, fd: 1, _isStdio: true },
+  stderr: { isTTY: false, write: noop, on: noop, fd: 2, _isStdio: true },
+  stdin: { isTTY: false, read: noop, on: noop, fd: 0, _isStdio: true },
+  pid: 1,
+  cwd: () => '/',
+  platform: 'browser',
+  browser: true,
+  exit: noop,
+  on: noop,
+  emit: noop,
+  once: noop,
+  removeListener: noop,
+};
 
 const handler: ProxyHandler<any> = {
   get: (target, prop) => {
     if (prop === 'default') return proxy;
     if (prop === '__esModule') return true;
-    if (prop === 'constants' || prop === 'promises' || prop === 'codes') return proxy;
-    if (prop === Symbol.toPrimitive) {
-      return (hint: string) => (hint === 'number' ? 0 : 'noop');
-    }
-    if (prop === 'toString' || prop === Symbol.toStringTag) return () => 'noop';
+    if (prop in target) return target[prop];
     return proxy;
   },
   apply: () => proxy,
   construct: () => proxy,
 };
 
-const proxy: any = new Proxy(noop, handler);
+const proxy: any = new Proxy(baseShim, handler);
 
-// --- Exportaciones Nombradas para Análisis Estático (Turbopack) ---
+// Inyectar process global para librerías que lo requieran
+if (typeof globalThis !== 'undefined') {
+  const g = globalThis as any;
+  if (!g.process) g.process = proxy;
+}
 
-// http / https / http2 / net / tls / dns / url
+// --- EXPORTACIONES NOMBRADAS REQUERIDAS POR TURBOPACK ---
+
+// HTTP / NET / TLS
 export const Agent = proxy;
 export const get = proxy;
 export const request = proxy;
 export const createServer = proxy;
 export const connect = proxy;
-export const codes = proxy;
 export const createConnection = proxy;
-export const isIP = proxy;
-export const isIPv4 = proxy;
-export const isIPv6 = proxy;
-export const lookup = proxy;
-export const resolve4 = proxy;
-export const resolve6 = proxy;
+export const isIP = () => false;
+export const isIPv4 = () => false;
+export const isIPv6 = () => false;
+export const lookup = noop;
 export const TLSSocket = proxy;
+
+// URL
 export const URL = typeof window !== 'undefined' ? window.URL : proxy;
 export const URLSearchParams = typeof window !== 'undefined' ? window.URLSearchParams : proxy;
-export const domainToASCII = proxy;
-export const domainToUnicode = proxy;
-export const fileURLToPath = proxy;
-export const pathToFileURL = proxy;
-export const urlToHttpOptions = proxy;
+export const format = (urlObj: any) => String(urlObj);
 
-// Constantes de red comunes
-export const HTTP2_HEADER_AUTHORITY = ':authority';
-export const HTTP2_HEADER_METHOD = ':method';
-export const HTTP2_HEADER_PATH = ':path';
-export const HTTP2_HEADER_SCHEME = ':scheme';
-export const HTTP2_HEADER_STATUS = ':status';
-
-// crypto
-export const randomBytes = proxy;
+// CRYPTO
+export const randomBytes = (size: number) => new Uint8Array(size);
 export const randomUUID = () => '00000000-0000-0000-0000-000000000000';
 export const createHash = proxy;
 export const createHmac = proxy;
-export const pbkdf2 = proxy;
-export const pbkdf2Sync = proxy;
-export const getSubtle = proxy;
 
-// events & stream
-export const EventEmitter = proxy;
-export const Readable = proxy;
-export const Writable = proxy;
-export const Transform = proxy;
-export const Duplex = proxy;
-export const Stream = proxy;
-export const PassThrough = proxy;
-export const pipeline = proxy;
-
-// path
-export const join = proxy;
-export const resolve = proxy;
-export const dirname = proxy;
-export const basename = proxy;
-export const extname = proxy;
-export const relative = proxy;
-export const isAbsolute = proxy;
-export const normalize = proxy;
-export const parse = proxy;
-export const format = proxy; 
-export const sep = '/';
-export const delimiter = ':';
-
-// util
-export const inspect = proxy;
-export const inherits = proxy;
-export const promisify = (fn: any) => fn || proxy;
-export const deprecate = (fn: any) => fn;
-export const debuglog = proxy;
-export const types = proxy;
-
-export class TextEncoder {
-  encode() { return new Uint8Array(); }
-}
-export class TextDecoder {
-  decode() { return ''; }
-}
-
-// fs
-export const constants = proxy; 
+// FS / PATH
 export const promises = proxy;
-export const readFile = proxy;
-export const writeFile = proxy;
+export const constants = proxy;
+export const readFile = asyncNoop;
+export const writeFile = asyncNoop;
 export const readFileSync = () => '';
-export const writeFileSync = proxy;
 export const existsSync = () => false;
-export const statSync = proxy;
-export const lstatSync = proxy;
-export const readdirSync = proxy;
-export const createReadStream = proxy;
-export const createWriteStream = proxy;
-export const accessSync = proxy;
+export const join = (...args: string[]) => args.join('/');
+export const resolve = (...args: string[]) => args.join('/');
+export const dirname = (p: string) => p;
+export const basename = (p: string) => p;
+export const extname = () => '';
+export const isAbsolute = () => true;
+export const sep = '/';
+export const parse = (p: string) => ({
+  root: '/',
+  dir: p.split('/').slice(0, -1).join('/') || '.',
+  base: p.split('/').pop() || '',
+  ext: p.includes('.') ? '.' + p.split('.').pop() : '',
+  name: p.split('/').pop()?.split('.').shift() || ''
+});
 
-// os
-export const homedir = () => '/';
-export const arch = () => 'x64';
+// UTIL
+export const inspect = (obj: any) => JSON.stringify(obj);
+export const promisify = (fn: any) => fn;
+export const deprecate = (fn: any) => fn;
+export const types = proxy;
+export const TextEncoder = typeof window !== 'undefined' ? window.TextEncoder : proxy;
+export const TextDecoder = typeof window !== 'undefined' ? window.TextDecoder : proxy;
+
+// OS
 export const hostname = () => 'localhost';
-export const platform = () => 'browser';
+export const arch = () => 'arm64';
+export const platform = () => 'darwin';
+export const userInfo = () => ({ username: 'user' });
 export const cpus = () => [];
-export const totalmem = () => 0;
-export const freemem = () => 0;
 export const networkInterfaces = () => ({});
-export const release = () => '';
-export const type = () => 'browser';
-export const userInfo = () => ({ username: 'browser' });
 
-// dgram
-export const createSocket = proxy;
+// STREAM / EVENTS
+export const EventEmitter = NoopEventEmitter;
+export const Readable = NoopStream;
+export const Writable = NoopStream;
+export const Transform = NoopStream;
+export const PassThrough = NoopStream;
+export const Stream = NoopStream;
 
-// zlib
-export const createGzip = proxy;
-export const createGunzip = proxy;
-export const createDeflate = proxy;
-export const createInflate = proxy;
-export const inflateSync = proxy;
-export const deflateSync = proxy;
-export const gunzipSync = proxy;
-export const gzipSync = proxy;
-
-// child_process
-export const exec = proxy;
-export const spawn = proxy;
-export const fork = proxy;
-
-// buffer
-export const Buffer = proxy;
-
-// vm
-export const runInContext = proxy;
-export const createContext = proxy;
-
-// perf_hooks
-export const performance = proxy;
-
-// async_hooks
+// PERF / ASYNC
+export const performance = typeof window !== 'undefined' ? window.performance : proxy;
 export const AsyncLocalStorage = proxy;
 export const AsyncResource = proxy;
 
-// process
-export const nextTick = (fn: Function) => setTimeout(fn, 0);
-export const env = {};
-export const argv = [];
-export const version = 'v18.0.0';
-export const stdout = { isTTY: false, write: proxy, on: proxy };
-export const stderr = { isTTY: false, write: proxy, on: proxy };
-export const stdin = { isTTY: false, read: proxy, on: proxy };
-export const pid = 1;
-export const cwd = () => '/';
-
-// timers
-export const setTimeout = (fn: Function, ms: number) => globalThis.setTimeout(fn, ms);
-export const clearTimeout = (id: any) => globalThis.clearTimeout(id);
-export const setInterval = (fn: Function, ms: number) => globalThis.setInterval(fn, ms);
-export const clearInterval = (id: any) => globalThis.clearInterval(id);
-export const setImmediate = (fn: Function) => globalThis.setTimeout(fn, 0);
-export const clearImmediate = (id: any) => globalThis.clearTimeout(id);
+// GLOBALES
+export const Buffer = proxy;
 
 export default proxy;
