@@ -20,6 +20,7 @@ import { useToast } from '@/hooks/use-toast';
 import { NotificationCenter } from '@/components/NotificationCenter';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import getApiUrl from '@/lib/api';
 
 export default function DashboardPage() {
   const { user, isUserLoading } = useUser();
@@ -190,7 +191,7 @@ export default function DashboardPage() {
         }
       };
 
-      const res = await fetch('/api/ai', {
+      const res = await fetch(getApiUrl('/api/ai'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -216,7 +217,7 @@ export default function DashboardPage() {
         }
       };
 
-      const res = await fetch('/api/ai', {
+      const res = await fetch(getApiUrl('/api/ai'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),

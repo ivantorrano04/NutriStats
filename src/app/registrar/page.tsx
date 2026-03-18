@@ -16,6 +16,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { UserProfile } from '@/lib/types';
+import getApiUrl from '@/lib/api';
 
 export default function RegistrarPage() {
   const { user } = useUser();
@@ -58,7 +59,7 @@ export default function RegistrarPage() {
         }
       };
 
-      const res = await fetch('/api/ai', {
+      const res = await fetch(getApiUrl('/api/ai'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),

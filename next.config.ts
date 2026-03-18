@@ -1,13 +1,14 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* Configuración necesaria para Capacitor */
-  output: 'export',      // Genera la carpeta 'out' con archivos estáticos
+  output: 'export',
   images: {
-    unoptimized: true,   // Capacitor no tiene servidor para optimizar imágenes en tiempo real
+    unoptimized: true,
   },
-  // Si usas rutas con "/" al final o extensiones .html, esto ayuda:
-  trailingSlash: true,   
+  trailingSlash: true,
+  // ESTA LÍNEA ES VITAL para el protocolo file:// del iPhone
+  assetPrefix: './', 
+  
   eslint: {
     ignoreDuringBuilds: true,
   },
