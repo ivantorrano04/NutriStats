@@ -1,3 +1,4 @@
+# codemagic.yaml completo para Capacitor con Swift Package Manager (SPM)
 workflows:
   ios-release:
     name: NutriStats iOS Release (Unsigned)
@@ -16,24 +17,32 @@ workflows:
       - name: Capacitor Sync
         script: |
           npx cap sync ios
-      - name: Build iOS App (No Codesign)
+      - name: Build iOS App (No Codesign - SPM Mode)
         script: |
-          # Compilamos el proyecto de Xcode sin firmar
+          # Usamos -project en lugar de -workspace porque usas SPM
           xcodebuild build \
-            -workspace ios/App/App.xcworkspace \
+            -project ios/App/App.xcodeproj \
             -scheme App \
             -configuration Release \
             -sdk iphoneos \
             CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGN_ING_REQUIRED=NO \
+            CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
             PROVISIONING_PROFILE=""
       - name: Package App as Zip
         script: |
-          # Buscamos el archivo .app generado y lo zipeamos como hacías en Flutter
+          # Buscamos el archivo .app generado en los datos derivados de Xcode
           cd ~/Library/Developer/Xcode/DerivedData
-          # Buscamos la carpeta de build (el nombre varía, así que usamos find)
+          
+          # Buscamos la carpeta de salida Release-iphoneos
           APP_PATH=$(find . -name "App.app" -type d | grep "Release-iphoneos" | head -1)
+          
+          if [ -z "$APP_PATH" ]; then
+            echo "Error: No se encontró el archivo App.app generado."
+            exit 1
+          fi
+          
+          echo "Archivo encontrado en: $APP_PATH"
           cd "$APP_PATH/.."
           zip -r NutriStats.app.zip App.app
           mv NutriStats.app.zip $CM_BUILD_DIR/
