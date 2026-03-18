@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Loader2, Sparkles, User, Mail, Lock, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Loader2, Sparkles, User, Mail, Lock, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 
@@ -42,7 +42,7 @@ export default function RegisterPage() {
       toast({
         variant: 'destructive',
         title: 'Error de registro',
-        description: err.message || 'No se pudo crear la cuenta.',
+        description: 'Verifica los datos.',
       });
     } finally {
       setLoading(false);
@@ -50,69 +50,65 @@ export default function RegisterPage() {
   };
 
   if (isUserLoading || user) {
-    return <div className="min-h-screen flex items-center justify-center bg-background"><Loader2 className="animate-spin text-primary w-12 h-12" /></div>;
+    return <div className="h-screen flex items-center justify-center bg-background"><Loader2 className="animate-spin text-primary w-10 h-10" /></div>;
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-6 relative overflow-hidden">
-      <div className="absolute top-[-15%] right-[-15%] w-[60%] h-[60%] bg-primary/20 blur-[150px] rounded-full animate-pulse" />
-      <div className="absolute bottom-[-15%] left-[-15%] w-[60%] h-[60%] bg-accent/20 blur-[150px] rounded-full animate-pulse" style={{ animationDelay: '3s' }} />
+    <div className="h-screen flex items-center justify-center p-5 relative overflow-hidden">
+      <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-primary/20 blur-[100px] rounded-full" />
+      <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-accent/20 blur-[100px] rounded-full" />
 
-      <div className="w-full max-w-md relative z-10 space-y-8">
-        <div className="text-center space-y-2 animate-in fade-in slide-in-from-top-4 duration-1000">
-          <div className="mx-auto w-24 h-24 rounded-[2.5rem] bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-2xl shadow-primary/30 animate-float">
-            <Sparkles className="text-white w-12 h-12" />
+      <div className="w-full max-w-[340px] relative z-10 space-y-6">
+        <div className="text-center space-y-1">
+          <div className="mx-auto w-16 h-16 rounded-[1.8rem] bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-xl shadow-primary/20">
+            <Sparkles className="text-white w-8 h-8" />
           </div>
-          <h1 className="text-5xl font-headline font-bold tracking-tighter text-foreground pt-4">NutriScan</h1>
-          <p className="text-muted-foreground font-medium text-lg">Crea tu perfil inteligente</p>
+          <h1 className="text-3xl font-headline font-bold tracking-tight text-foreground pt-3">NutriScan</h1>
+          <p className="text-muted-foreground font-medium text-xs">Crea tu perfil inteligente</p>
         </div>
 
-        <Card className="glass border-none shadow-[0_50px_100px_rgba(0,0,0,0.3)] dark:shadow-[0_50px_100px_rgba(0,0,0,0.5)] rounded-[3.5rem] overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200">
-          <CardHeader className="space-y-1 pb-2 pt-10 px-10">
-            <div className="flex items-center gap-2 mb-2">
-              <ShieldCheck className="w-5 h-5 text-emerald-500" />
-              <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-emerald-500">Privacidad Garantizada</span>
-            </div>
-            <CardTitle className="text-3xl font-headline font-bold">Unirse</CardTitle>
-            <CardDescription className="text-sm font-medium opacity-70">Empieza tu seguimiento en segundos</CardDescription>
+        <Card className="glass border-none shadow-2xl rounded-[2.8rem] overflow-hidden">
+          <CardHeader className="space-y-0.5 pb-0 pt-8 px-8">
+            <CardTitle className="text-xl font-headline font-bold">Unirse</CardTitle>
+            <CardDescription className="text-[10px] font-medium opacity-60">Empieza hoy mismo</CardDescription>
           </CardHeader>
           <form onSubmit={handleRegister}>
-            <CardContent className="space-y-6 px-10 pb-8">
-              <div className="space-y-2">
-                <Label className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground px-1">Nombre Completo</Label>
+            <CardContent className="space-y-4 px-8 pt-6 pb-6">
+              <div className="space-y-1.5">
+                <Label className="text-[9px] font-bold uppercase tracking-[0.2em] text-muted-foreground px-1">Nombre</Label>
                 <div className="relative group">
-                  <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground transition-colors group-focus-within:text-primary" />
+                  <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
                   <Input 
-                    placeholder="Ej. Iván Guerrero" 
-                    className="glass pl-12 h-16 rounded-2xl border-white/10 focus:border-primary/50 transition-all text-lg font-medium" 
+                    placeholder="Ej. Iván" 
+                    className="glass pl-10 h-12 rounded-xl border-white/5 focus:border-primary/40 transition-all text-sm" 
                     value={name}
                     onChange={e => setName(e.target.value)}
                     required
                   />
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground px-1">Email</Label>
+              <div className="space-y-1.5">
+                <Label className="text-[9px] font-bold uppercase tracking-[0.2em] text-muted-foreground px-1">Email</Label>
                 <div className="relative group">
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground transition-colors group-focus-within:text-primary" />
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
                   <Input 
                     type="email" 
                     placeholder="tu@email.com" 
-                    className="glass pl-12 h-16 rounded-2xl border-white/10 focus:border-primary/50 transition-all text-lg font-medium" 
+                    className="glass pl-10 h-12 rounded-xl border-white/5 focus:border-primary/40 transition-all text-sm" 
                     value={email}
                     onChange={e => setEmail(e.target.value)}
                     required
                   />
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground px-1">Contraseña</Label>
+              <div className="space-y-1.5">
+                <Label className="text-[9px] font-bold uppercase tracking-[0.2em] text-muted-foreground px-1">Clave</Label>
                 <div className="relative group">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground transition-colors group-focus-within:text-primary" />
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
                   <Input 
                     type="password" 
-                    placeholder="Mínimo 6 caracteres" 
-                    className="glass pl-12 h-16 rounded-2xl border-white/10 focus:border-primary/50 transition-all text-lg font-medium" 
+                    placeholder="Min 6 caracteres" 
+                    className="glass pl-10 h-12 rounded-xl border-white/5 focus:border-primary/40 transition-all text-sm" 
                     value={password}
                     onChange={e => setPassword(e.target.value)}
                     required
@@ -122,23 +118,16 @@ export default function RegisterPage() {
               </div>
               <Button 
                 type="submit"
-                className="w-full h-18 text-xl font-bold bg-primary hover:bg-primary/90 mt-4 rounded-[2rem] shadow-2xl shadow-primary/30 group ios-btn transition-all py-8" 
+                className="w-full h-14 text-base font-bold bg-primary hover:bg-primary/90 mt-2 rounded-[1.5rem] shadow-xl shadow-primary/20 ios-btn py-6" 
                 disabled={loading}
               >
-                {loading ? (
-                  <Loader2 className="animate-spin mr-2" />
-                ) : (
-                  <>
-                    <span>Crear mi Cuenta</span>
-                    <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-                  </>
-                )}
+                {loading ? <Loader2 className="animate-spin mr-2" /> : "Crear Cuenta"}
               </Button>
             </CardContent>
           </form>
-          <CardFooter className="flex flex-col gap-4 border-t border-white/10 pt-8 pb-10">
-            <p className="text-sm text-muted-foreground font-medium">
-              ¿Ya estás con nosotros? <Link href="/login" className="text-primary font-bold hover:text-accent transition-colors hover:underline underline-offset-4">Inicia sesión</Link>
+          <CardFooter className="flex flex-col gap-3 border-t border-white/5 pt-6 pb-8">
+            <p className="text-[10px] text-muted-foreground font-medium">
+              ¿Ya eres usuario? <Link href="/login" className="text-primary font-bold hover:underline">Inicia sesión</Link>
             </p>
           </CardFooter>
         </Card>

@@ -12,27 +12,21 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ActivityLevel, Goal, Gender, UserProfile, Intensity } from '@/lib/types';
-import { Loader2, Sparkles, ChevronRight, Target, Activity, Ruler } from 'lucide-react';
+import { Loader2, Sparkles, ChevronRight, Target, Activity } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const ACTIVITY_DESC: Record<ActivityLevel, string> = {
   sedentario: 'Poco o nada (0 días)',
-  ligero: 'Ejercicio ligero (1-2 días/semana)',
-  moderado: 'Ejercicio moderado (3-5 días/semana)',
-  activo: 'Entrenamiento diario (6-7 días/semana)',
-  muy_activo: 'Entrenamiento intenso o trabajo físico'
+  ligero: 'Ligero (1-2 días)',
+  moderado: 'Moderado (3-5 días)',
+  activo: 'Activo (6-7 días)',
+  muy_activo: 'Deportista / Trabajo físico'
 };
 
 const GOAL_LABELS: Record<Goal, string> = {
   perder_grasa: 'Perder Grasa',
   mantenimiento: 'Mantener Peso',
-  ganar_musculo: 'Ganar Masa Muscular'
-};
-
-const INTENSITY_LABELS: Record<Intensity, string> = {
-  saludable: 'Plan Saludable (Sostenible)',
-  moderado: 'Plan Moderado (Equilibrado)',
-  intenso: 'Plan Intenso (Resultados Rápidos)'
+  ganar_musculo: 'Ganar Masa'
 };
 
 export default function OnboardingPage() {
@@ -116,144 +110,110 @@ export default function OnboardingPage() {
     }
   };
 
-  if (isUserLoading) return <div className="h-screen flex items-center justify-center bg-background"><Loader2 className="animate-spin text-primary w-12 h-12" /></div>;
+  if (isUserLoading) return <div className="h-screen flex items-center justify-center bg-background"><Loader2 className="animate-spin text-primary w-10 h-10" /></div>;
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-6 relative overflow-hidden">
-      <div className="absolute top-[-20%] left-[-20%] w-[60%] h-[60%] bg-primary/15 blur-[150px] rounded-full animate-pulse" />
-      <div className="absolute bottom-[-20%] right-[-20%] w-[60%] h-[60%] bg-accent/15 blur-[150px] rounded-full animate-pulse" style={{ animationDelay: '3s' }} />
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-5 relative overflow-x-hidden pb-10">
+      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-primary/15 blur-[100px] rounded-full" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-accent/15 blur-[100px] rounded-full" />
 
-      <div className="w-full max-w-lg relative z-10 space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-1000">
-        <header className="text-center space-y-3">
-          <div className="mx-auto w-16 h-16 rounded-[1.5rem] bg-primary flex items-center justify-center shadow-2xl shadow-primary/20 animate-float">
-            <Sparkles className="text-white w-8 h-8" />
+      <div className="w-full max-w-[360px] relative z-10 space-y-5">
+        <header className="text-center space-y-1">
+          <div className="mx-auto w-12 h-12 rounded-2xl bg-primary flex items-center justify-center shadow-xl shadow-primary/10">
+            <Sparkles className="text-white w-6 h-6" />
           </div>
-          <h1 className="text-4xl font-headline font-bold tracking-tighter text-foreground pt-2">Tu Plan IA</h1>
-          <p className="text-muted-foreground font-medium max-w-[280px] mx-auto leading-tight">Configura tu perfil para que la IA diseñe tus macros</p>
+          <h1 className="text-2xl font-headline font-bold tracking-tight text-foreground pt-2">Tu Plan IA</h1>
+          <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-[0.2em] opacity-60">Diseño de Biometría</p>
         </header>
 
-        <Card className="glass border-none shadow-[0_50px_100px_rgba(0,0,0,0.4)] rounded-[3rem] overflow-hidden">
-          <CardHeader className="pb-0 pt-10 px-8">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-primary/20 flex items-center justify-center">
-                 <Target className="w-5 h-5 text-primary" />
-              </div>
-              <CardTitle className="text-2xl font-headline font-bold">Biometría</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="p-8 space-y-8">
-            <div className="grid grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground px-1">Peso Actual (kg)</Label>
+        <Card className="glass border-none shadow-2xl rounded-[2.5rem] overflow-hidden">
+          <CardContent className="p-6 space-y-5">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground px-1">Peso (kg)</Label>
                 <Input 
                   type="number" 
-                  className="glass h-14 rounded-2xl border-white/5 text-lg font-bold" 
+                  className="glass h-11 rounded-xl border-white/5 text-base font-bold" 
                   value={formData.peso ?? ''} 
                   onChange={e => setFormData({...formData, peso: Number(e.target.value)})} 
                 />
               </div>
-              <div className="space-y-2">
-                <Label className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground px-1">Peso Objetivo (kg)</Label>
+              <div className="space-y-1.5">
+                <Label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground px-1">Altura (cm)</Label>
                 <Input 
                   type="number" 
-                  className="glass h-14 rounded-2xl border-white/5 text-lg font-bold" 
-                  value={formData.targetWeight ?? ''} 
-                  onChange={e => setFormData({...formData, targetWeight: Number(e.target.value)})} 
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground px-1">Altura (cm)</Label>
-                <Input 
-                  type="number" 
-                  className="glass h-14 rounded-2xl border-white/5 text-lg font-bold" 
+                  className="glass h-11 rounded-xl border-white/5 text-base font-bold" 
                   value={formData.altura ?? ''} 
                   onChange={e => setFormData({...formData, altura: Number(e.target.value)})} 
                 />
               </div>
-              <div className="space-y-2">
-                <Label className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground px-1">Edad</Label>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground px-1">Edad</Label>
                 <Input 
                   type="number" 
-                  className="glass h-14 rounded-2xl border-white/5 text-lg font-bold" 
+                  className="glass h-11 rounded-xl border-white/5 text-base font-bold" 
                   value={formData.edad ?? ''} 
                   onChange={e => setFormData({...formData, edad: Number(e.target.value)})} 
                 />
               </div>
+              <div className="space-y-1.5">
+                <Label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground px-1">Género</Label>
+                <RadioGroup value={formData.genero} onValueChange={v => setFormData({...formData, genero: v as Gender})} className="flex gap-2">
+                  <div className={cn(
+                    "flex-1 flex items-center justify-center h-11 glass rounded-xl cursor-pointer text-xs font-bold transition-all border-white/5",
+                    formData.genero === 'hombre' ? "bg-primary/20 border-primary/40 shadow-lg" : "opacity-50"
+                  )} onClick={() => setFormData({...formData, genero: 'hombre'})}>
+                    H
+                  </div>
+                  <div className={cn(
+                    "flex-1 flex items-center justify-center h-11 glass rounded-xl cursor-pointer text-xs font-bold transition-all border-white/5",
+                    formData.genero === 'mujer' ? "bg-primary/20 border-primary/40 shadow-lg" : "opacity-50"
+                  )} onClick={() => setFormData({...formData, genero: 'mujer'})}>
+                    M
+                  </div>
+                </RadioGroup>
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground px-1 flex items-center gap-2">
-                <Activity className="w-3 h-3" /> Nivel de Actividad
-              </Label>
+            <div className="space-y-1.5">
+              <Label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground px-1">Actividad</Label>
               <Select value={formData.actividad} onValueChange={v => setFormData({...formData, actividad: v as ActivityLevel})}>
-                <SelectTrigger className="glass h-14 rounded-2xl border-white/5 text-sm font-medium">
+                <SelectTrigger className="glass h-11 rounded-xl border-white/5 text-[11px] font-medium">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="glass border-white/5 rounded-2xl">
                   {Object.entries(ACTIVITY_DESC).map(([key, desc]) => (
-                    <SelectItem key={key} value={key}>
-                      <div className="flex flex-col text-left py-1">
-                        <span className="capitalize font-bold text-sm">{key.replace('_', ' ')}</span>
-                        <span className="text-[10px] text-muted-foreground">{desc}</span>
-                      </div>
+                    <SelectItem key={key} value={key} className="text-xs">
+                      {desc}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
 
-            <div className="grid grid-cols-1 gap-6">
-              <div className="space-y-2">
-                <Label className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground px-1">Tu Objetivo Principal</Label>
-                <Select value={formData.objetivo} onValueChange={v => setFormData({...formData, objetivo: v as Goal})}>
-                  <SelectTrigger className="glass h-14 rounded-2xl border-white/5 text-sm font-medium">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="glass border-white/5 rounded-2xl">
-                    {Object.entries(GOAL_LABELS).map(([key, label]) => (
-                      <SelectItem key={key} value={key} className="font-bold">{label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <Label className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground px-1">Género</Label>
-              <RadioGroup value={formData.genero} onValueChange={v => setFormData({...formData, genero: v as Gender})} className="flex gap-4">
-                <div className={cn(
-                  "flex-1 flex items-center justify-center gap-2 glass px-6 py-4 rounded-2xl cursor-pointer transition-all border-white/5",
-                  formData.genero === 'hombre' ? "bg-primary/20 border-primary/40 shadow-lg shadow-primary/10" : "hover:bg-white/5"
-                )} onClick={() => setFormData({...formData, genero: 'hombre'})}>
-                  <RadioGroupItem value="hombre" id="h" className="sr-only" />
-                  <span className="font-bold tracking-tight">Hombre</span>
-                </div>
-                <div className={cn(
-                  "flex-1 flex items-center justify-center gap-2 glass px-6 py-4 rounded-2xl cursor-pointer transition-all border-white/5",
-                  formData.genero === 'mujer' ? "bg-primary/20 border-primary/40 shadow-lg shadow-primary/10" : "hover:bg-white/5"
-                )} onClick={() => setFormData({...formData, genero: 'mujer'})}>
-                  <RadioGroupItem value="mujer" id="m" className="sr-only" />
-                  <span className="font-bold tracking-tight">Mujer</span>
-                </div>
-              </RadioGroup>
+            <div className="space-y-1.5">
+              <Label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground px-1">Objetivo</Label>
+              <Select value={formData.objetivo} onValueChange={v => setFormData({...formData, objetivo: v as Goal})}>
+                <SelectTrigger className="glass h-11 rounded-xl border-white/5 text-[11px] font-medium">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="glass border-white/5 rounded-2xl">
+                  {Object.entries(GOAL_LABELS).map(([key, label]) => (
+                    <SelectItem key={key} value={key} className="text-xs font-bold">{label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <Button 
-              className="w-full h-18 py-8 text-xl font-bold bg-primary hover:bg-primary/90 mt-4 rounded-[2rem] shadow-2xl shadow-primary/30 group ios-btn transition-all" 
+              className="w-full h-14 text-base font-bold bg-primary hover:bg-primary/90 mt-4 rounded-[1.5rem] shadow-xl shadow-primary/20 ios-btn" 
               onClick={handleStart}
               disabled={loading}
             >
-              {loading ? (
-                <Loader2 className="animate-spin mr-2" />
-              ) : (
-                <>
-                  <span>Crear mi Plan</span>
-                  <ChevronRight className="w-6 h-6 ml-2 group-hover:translate-x-1 transition-transform" />
-                </>
-              )}
+              {loading ? <Loader2 className="animate-spin mr-2" /> : "Empezar Plan"}
             </Button>
           </CardContent>
         </Card>

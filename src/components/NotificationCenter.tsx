@@ -5,7 +5,7 @@ import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebas
 import { collection, query, orderBy, limit, doc, writeBatch } from 'firebase/firestore';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Bell, BellDot, CheckCheck, Inbox, Info, Sparkles, Trophy, AlertTriangle, Flame, Trash2 } from 'lucide-react';
+import { Bell, BellDot, CheckCheck, Inbox, Info, Sparkles, Trophy, AlertTriangle, Flame, Trash2, Clock } from 'lucide-react';
 import { AppNotification } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
@@ -68,9 +68,10 @@ export function NotificationCenter() {
   const getIcon = (type: string) => {
     switch (type) {
       case 'goal': return <Trophy className="w-4 h-4 text-primary" />;
-      case 'success': return <Sparkles className="w-4 h-4 text-accent" />;
+      case 'success': return <Sparkles className="w-4 h-4 text-emerald-500" />;
       case 'warning': return <AlertTriangle className="w-4 h-4 text-orange-500" />;
       case 'praise': return <Flame className="w-4 h-4 text-orange-500" />;
+      case 'friend_request': return <Users className="w-4 h-4 text-accent" />;
       default: return <Info className="w-4 h-4 text-muted-foreground" />;
     }
   };
@@ -78,11 +79,11 @@ export function NotificationCenter() {
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative rounded-2xl glass hover:bg-primary/10">
+        <Button variant="ghost" size="icon" className="relative rounded-2xl glass hover:bg-primary/10 ios-btn">
           {unreadCount > 0 ? (
             <>
               <BellDot className="w-5 h-5 text-primary animate-pulse" />
-              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white ring-2 ring-background">
+              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-white ring-2 ring-background">
                 {unreadCount}
               </span>
             </>
@@ -91,32 +92,34 @@ export function NotificationCenter() {
           )}
         </Button>
       </SheetTrigger>
-      <SheetContent className="glass border-l border-border/50 sm:max-w-md [&>button]:hidden">
-        <SheetHeader className="flex flex-col pb-6 space-y-4">
+      <SheetContent className="glass border-l-0 sm:border-l border-border/20 sm:max-w-md p-0 [&>button]:hidden rounded-l-[3rem] overflow-hidden shadow-2xl">
+        <SheetHeader className="p-8 pb-4 bg-background/50 backdrop-blur-3xl sticky top-0 z-20">
           <div className="flex items-center justify-between w-full">
-            <SheetTitle className="text-2xl font-headline font-bold">Notificaciones</SheetTitle>
-            <div className="flex gap-2">
+            <SheetTitle className="text-2xl font-headline font-bold">Resumen</SheetTitle>
+            <div className="flex gap-1.5">
               {unreadCount > 0 && (
-                <Button variant="ghost" size="sm" onClick={markAllAsRead} className="text-[10px] font-bold text-primary hover:bg-primary/10 h-8 rounded-xl px-2">
-                  <CheckCheck className="w-3 h-3 mr-1" /> Leer todas
+                <Button variant="ghost" size="sm" onClick={markAllAsRead} className="text-[9px] font-bold text-primary hover:bg-primary/10 h-8 rounded-xl px-2.5 ios-btn">
+                  <CheckCheck className="w-3 h-3 mr-1.5" /> Leer
                 </Button>
               )}
               {notifications && notifications.length > 0 && (
-                <Button variant="ghost" size="sm" onClick={clearAllNotifications} className="text-[10px] font-bold text-destructive hover:bg-destructive/10 h-8 rounded-xl px-2">
-                  <Trash2 className="w-3 h-3 mr-1" /> Limpiar
+                <Button variant="ghost" size="sm" onClick={clearAllNotifications} className="text-[9px] font-bold text-destructive hover:bg-destructive/10 h-8 rounded-xl px-2.5 ios-btn">
+                  <Trash2 className="w-3 h-3 mr-1.5" /> Limpiar
                 </Button>
               )}
             </div>
           </div>
         </SheetHeader>
 
-        <div className="space-y-4 overflow-y-auto max-h-[calc(100vh-160px)] pr-2">
+        <div className="px-6 py-4 space-y-4 overflow-y-auto max-h-[calc(100vh-120px)]">
           {notifications?.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-center space-y-4 opacity-50">
-              <Inbox className="w-12 h-12 text-muted-foreground" />
-              <div className="space-y-1">
-                <p className="font-bold">Todo al día</p>
-                <p className="text-xs">No tienes notificaciones pendientes.</p>
+            <div className="flex flex-col items-center justify-center py-32 text-center space-y-4 opacity-40">
+              <div className="w-20 h-20 rounded-full bg-secondary/30 flex items-center justify-center">
+                <Inbox className="w-8 h-8 text-muted-foreground" />
+              </div>
+              <div className="space-y-1 px-8">
+                <p className="font-bold text-lg">Todo en orden</p>
+                <p className="text-[10px] font-medium leading-tight">No tienes notificaciones pendientes por ahora.</p>
               </div>
             </div>
           ) : (
@@ -125,24 +128,29 @@ export function NotificationCenter() {
                 key={n.id}
                 onClick={() => !n.read && markAsRead(n.id)}
                 className={cn(
-                  "p-4 rounded-3xl transition-all cursor-pointer border relative group",
-                  n.read ? "bg-transparent border-transparent opacity-60" : "glass border-primary/20 shadow-lg"
+                  "p-5 rounded-[1.8rem] transition-all cursor-pointer border relative group ios-btn",
+                  n.read 
+                    ? "bg-secondary/20 border-transparent opacity-50" 
+                    : "glass border-primary/20 shadow-xl shadow-primary/5"
                 )}
               >
-                {!n.read && <div className="absolute top-4 right-4 w-2 h-2 rounded-full bg-primary" />}
+                {!n.read && <div className="absolute top-5 right-5 w-2.5 h-2.5 rounded-full bg-primary shadow-[0_0_10px_rgba(59,130,246,0.6)]" />}
                 <div className="flex gap-4">
                   <div className={cn(
-                    "w-10 h-10 rounded-2xl flex items-center justify-center shrink-0",
-                    n.read ? "bg-secondary" : "bg-primary/10"
+                    "w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 shadow-inner",
+                    n.read ? "bg-secondary/40" : "bg-primary/10"
                   )}>
                     {getIcon(n.type)}
                   </div>
-                  <div className="space-y-1">
-                    <h4 className={cn("text-sm font-bold", !n.read && "text-primary")}>{n.title}</h4>
-                    <p className="text-xs text-muted-foreground leading-relaxed">{n.message}</p>
-                    <p className="text-[10px] text-muted-foreground pt-1 font-medium">
-                      {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true, locale: es })}
-                    </p>
+                  <div className="space-y-1 flex-1 min-w-0">
+                    <h4 className={cn("text-sm font-bold truncate", !n.read && "text-primary")}>{n.title}</h4>
+                    <p className="text-[11px] text-muted-foreground leading-snug font-medium">{n.message}</p>
+                    <div className="flex items-center gap-1.5 pt-2 opacity-50">
+                      <Clock className="w-3 h-3" />
+                      <p className="text-[9px] font-bold uppercase tracking-wider">
+                        {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true, locale: es })}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
