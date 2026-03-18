@@ -162,10 +162,13 @@ export const performance = proxy;
 // async_hooks
 export const AsyncLocalStorage = proxy;
 
-// process (para desestructuraciones si se usa como alias)
+// process
 export const nextTick = (fn: Function) => setTimeout(fn, 0);
 export const env = {};
 export const argv = [];
 export const version = 'v18.0.0';
+export const stdout = proxy;
+export const stderr = proxy;
+export const stdin = proxy;
 
 export default proxy;

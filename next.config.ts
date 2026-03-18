@@ -41,11 +41,8 @@ const nextConfig: NextConfig = {
   experimental: {
     turbo: {
       resolveAlias: {
-        // Redirigimos módulos de Node.js y paquetes de servidor al Universal Shim para Turbopack
         'fs': './src/lib/noop.ts',
         'node:fs': './src/lib/noop.ts',
-        'fs/promises': './src/lib/noop.ts',
-        'node:fs/promises': './src/lib/noop.ts',
         'path': './src/lib/noop.ts',
         'node:path': './src/lib/noop.ts',
         'util': './src/lib/noop.ts',
@@ -62,45 +59,23 @@ const nextConfig: NextConfig = {
         'node:http': './src/lib/noop.ts',
         'https': './src/lib/noop.ts',
         'node:https': './src/lib/noop.ts',
-        'http2': './src/lib/noop.ts',
-        'node:http2': './src/lib/noop.ts',
-        'net': './src/lib/noop.ts',
-        'node:net': './src/lib/noop.ts',
-        'tls': './src/lib/noop.ts',
-        'node:tls': './src/lib/noop.ts',
-        'dns': './src/lib/noop.ts',
-        'node:dns': './src/lib/noop.ts',
-        'dgram': './src/lib/noop.ts',
-        'node:dgram': './src/lib/noop.ts',
         'zlib': './src/lib/noop.ts',
         'node:zlib': './src/lib/noop.ts',
-        'readline': './src/lib/noop.ts',
-        'node:readline': './src/lib/noop.ts',
-        'child_process': './src/lib/noop.ts',
-        'node:child_process': './src/lib/noop.ts',
-        'buffer': './src/lib/noop.ts',
-        'node:buffer': './src/lib/noop.ts',
-        'vm': './src/lib/noop.ts',
-        'node:vm': './src/lib/noop.ts',
-        'async_hooks': './src/lib/noop.ts',
-        'node:async_hooks': './src/lib/noop.ts',
-        'perf_hooks': './src/lib/noop.ts',
-        'node:perf_hooks': './src/lib/noop.ts',
+        'process': './src/lib/noop.ts',
+        'node:process': './src/lib/noop.ts',
         'express': './src/lib/noop.ts',
         'get-port': './src/lib/noop.ts',
       },
     },
   },
   webpack: (config, { isServer }) => {
-    // Aplicamos los alias de Webpack solo en el cliente
     if (!isServer) {
       const noopPath = path.resolve(process.cwd(), 'src/lib/noop.ts');
       
       const nodeModules = [
-        'fs', 'fs/promises', 'net', 'tls', 'child_process', 'perf_hooks', 'async_hooks', 
-        'dns', 'http2', 'path', 'os', 'crypto', 'stream', 'http', 'https', 
-        'zlib', 'readline', 'events', 'util', 'buffer', 'vm', 'dgram',
-        'express', 'get-port'
+        'fs', 'path', 'util', 'events', 'stream', 'crypto', 'os', 'http', 'https', 
+        'zlib', 'process', 'express', 'get-port', 'child_process', 'net', 'tls', 
+        'dns', 'http2', 'readline', 'vm', 'buffer', 'dgram', 'perf_hooks', 'async_hooks'
       ];
       
       nodeModules.forEach(mod => {
@@ -111,24 +86,16 @@ const nextConfig: NextConfig = {
       config.resolve.fallback = {
         ...config.resolve.fallback,
         fs: false,
-        net: false,
-        tls: false,
-        child_process: false,
-        os: false,
         path: false,
-        crypto: false,
+        util: false,
+        events: false,
         stream: false,
+        crypto: false,
+        os: false,
         http: false,
         https: false,
         zlib: false,
-        util: false,
-        events: false,
-        buffer: false,
-        vm: false,
-        async_hooks: false,
-        dgram: false,
-        dns: false,
-        http2: false,
+        process: false,
       };
     }
     return config;
