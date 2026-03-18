@@ -65,6 +65,11 @@
   * {
     @apply border-border;
   }
+  html {
+    font-size: 92%; /* Escalado global para densidad Retina */
+    -webkit-text-size-adjust: 100%;
+    overscroll-behavior: none;
+  }
   body {
     @apply font-body antialiased transition-colors duration-700;
     background-color: hsl(var(--background));
@@ -100,6 +105,9 @@
 /* Botones estilo iOS */
 .ios-btn {
   @apply active:scale-90 transition-all duration-200 cursor-pointer touch-none select-none;
+}
+
+.ios-btn-active {
   transition-timing-function: cubic-bezier(0.33, 1, 0.68, 1);
 }
 

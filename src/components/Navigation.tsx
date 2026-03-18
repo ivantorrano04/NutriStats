@@ -24,22 +24,24 @@ export function BottomNav() {
   ];
 
   return (
-    <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[100] w-[90%] max-w-sm pointer-events-none">
+    <div className="fixed bottom-0 left-1/2 -translate-x-1/2 z-[100] w-full max-w-sm pointer-events-none px-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
       <nav className="glass rounded-[3rem] flex justify-around items-center h-20 px-4 border-white/20 pointer-events-auto shadow-[0_20px_60px_rgba(0,0,0,0.3)] dark:shadow-[0_20px_80px_rgba(0,0,0,0.6)]">
         {navItems.map((item) => {
           const Icon = item.icon;
-          const isActive = pathname === item.href;
+          // Comprobar si el pathname empieza por el href (para rutas anidadas) o coincide exactamente
+          const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname?.startsWith(item.href));
+          
           return (
             <Link
               key={item.href}
               href={item.href}
               className={cn(
                 "flex flex-col items-center justify-center w-full h-full transition-all duration-300 relative ios-btn group",
-                isActive ? "text-primary" : "text-muted-foreground opacity-50"
+                isActive ? "text-primary scale-105" : "text-muted-foreground opacity-50"
               )}
             >
               <div className="relative flex flex-col items-center">
-                <Icon className={cn("w-6 h-6 transition-transform duration-300", isActive && "scale-110 stroke-[2.5px]")} />
+                <Icon className={cn("w-6 h-6 transition-all duration-300", isActive && "stroke-[2.5px] drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]")} />
                 <span className={cn(
                   "text-[8px] font-bold mt-1.5 uppercase tracking-[0.2em] transition-all duration-300", 
                   isActive ? "opacity-100 translate-y-0" : "opacity-0 translate-y-1"
@@ -47,7 +49,7 @@ export function BottomNav() {
                   {item.label}
                 </span>
                 {isActive && (
-                  <div className="absolute -inset-6 bg-primary/15 rounded-full blur-2xl animate-pulse -z-10" />
+                  <div className="absolute -inset-6 bg-primary/10 rounded-full blur-2xl animate-pulse -z-10" />
                 )}
               </div>
             </Link>
