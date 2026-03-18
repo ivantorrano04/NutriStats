@@ -21,6 +21,8 @@ export interface UserProfile {
   carbohydrateGoalGrams: number;
   fatGoalGrams: number;
   metaAguaMl: number;
+  streak: number;
+  lastLogDate: string; // YYYY-MM-DD
   createdAt: string;
   updatedAt?: string;
 }

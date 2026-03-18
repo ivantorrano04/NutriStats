@@ -38,6 +38,7 @@ export default function DashboardPage() {
   const [selectedMeal, setSelectedMeal] = useState<MealRecord | null>(null);
   const [friendMeals, setFriendMeals] = useState<any[]>([]);
   const [loadingSocial, setLoadingSocial] = useState(false);
+  const [currentStreak, setCurrentStreak] = useState(0);
 
   useEffect(() => {
     const now = new Date();
@@ -51,6 +52,20 @@ export default function DashboardPage() {
 
   const userDocRef = useMemoFirebase(() => user ? doc(db, 'users', user.uid) : null, [db, user]);
   const { data: profile } = useDoc<UserProfile>(userDocRef);
+
+  useEffect(() => {
+    if (profile) {
+      const today = new Date().toISOString().split('T')[0];
+      const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+      
+      // La racha se mantiene si se registró hoy o ayer
+      if (profile.lastLogDate === today || profile.lastLogDate === yesterday) {
+        setCurrentStreak(profile.streak || 0);
+      } else {
+        setCurrentStreak(0);
+      }
+    }
+  }, [profile]);
 
   const mealsQuery = useMemoFirebase(() => (user && todayDate) ? query(
     collection(db, 'users', user.uid, 'mealLogs'),
@@ -78,7 +93,7 @@ export default function DashboardPage() {
         const mealsPromises = friendsData.map(async (friend) => {
           const mSnap = await getDocs(query(
             collection(db, 'users', friend.friendId, 'mealLogs'),
-            where('logDateTime', '>=', todayDate), // SOLO HOY
+            where('logDateTime', '>=', todayDate),
             orderBy('logDateTime', 'desc'),
             limit(1)
           ));
@@ -247,9 +262,11 @@ export default function DashboardPage() {
               <p className="text-primary font-bold text-sm tracking-wider uppercase opacity-80">
                 {greeting}, {profile.name}
               </p>
-              <div className="flex items-center gap-1 bg-orange-500/10 text-orange-500 px-2 py-0.5 rounded-full text-[10px] font-bold animate-pulse">
-                <Flame className="w-3 h-3 fill-orange-500" /> Racha: 3
-              </div>
+              {currentStreak > 0 && (
+                <div className="flex items-center gap-1 bg-orange-500/10 text-orange-500 px-2 py-0.5 rounded-full text-[10px] font-bold animate-pulse">
+                  <Flame className="w-3 h-3 fill-orange-500" /> Racha: {currentStreak}
+                </div>
+              )}
             </div>
             <h1 className="text-4xl font-headline font-bold text-foreground drop-shadow-sm">NutriScan</h1>
           </div>

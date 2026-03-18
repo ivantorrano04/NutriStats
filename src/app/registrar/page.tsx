@@ -1,9 +1,10 @@
+
 "use client";
 
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { useUser, useFirestore, addDocumentNonBlocking } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { useUser, useFirestore, addDocumentNonBlocking, useDoc, useMemoFirebase } from '@/firebase';
+import { collection, doc, updateDoc, getDoc } from 'firebase/firestore';
 import { BottomNav } from '@/components/Navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,6 +15,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
+import { UserProfile } from '@/lib/types';
 
 export default function RegistrarPage() {
   const { user } = useUser();
@@ -28,6 +30,8 @@ export default function RegistrarPage() {
   const [error, setError] = useState<string | null>(null);
   const [analysisResult, setAnalysisResult] = useState<any>(null);
   const [mealName, setMealName] = useState('');
+
+  const userDocRef = useMemoFirebase(() => user ? doc(db, 'users', user.uid) : null, [db, user]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -60,40 +64,65 @@ export default function RegistrarPage() {
     }
   };
 
-  const saveMeal = () => {
-    if (!user) return;
+  const saveMeal = async () => {
+    if (!user || !userDocRef) return;
     if (!mealName) {
       setError('Dale un nombre a tu comida.');
       return;
     }
 
     setSaving(true);
-    const finalData = analysisResult || { calories: 0, protein: 0, carbohydrates: 0, fats: 0, analysisRaw: '{}' };
-    
-    const mealLog = {
-      userId: user.uid,
-      logDateTime: new Date().toISOString(),
-      mealType: mealName,
-      totalCalories: Math.round(finalData.calories),
-      totalProteins: Math.round(finalData.protein),
-      totalCarbohydrates: Math.round(finalData.carbohydrates),
-      totalFats: Math.round(finalData.fats),
-      photoDataUri: photo,
-      analysisRaw: finalData.analysisRaw
-    };
+    try {
+      // 1. Calcular Racha
+      const profileSnap = await getDoc(userDocRef);
+      if (profileSnap.exists()) {
+        const profile = profileSnap.data() as UserProfile;
+        const today = new Date().toISOString().split('T')[0];
+        const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+        
+        let newStreak = profile.streak || 0;
+        let lastLog = profile.lastLogDate || '';
 
-    addDocumentNonBlocking(collection(db, 'users', user.uid, 'mealLogs'), mealLog)
-      .then(() => {
-        toast({
-          title: "¡Comida registrada!",
-          description: `${mealLog.totalCalories} kcal añadidas a tu diario.`,
-        });
-        router.push('/dashboard');
-      })
-      .catch((err) => {
-        setSaving(false);
-        console.error(err);
+        if (lastLog !== today) {
+          if (lastLog === yesterday) {
+            newStreak += 1;
+          } else {
+            newStreak = 1;
+          }
+          await updateDoc(userDocRef, {
+            streak: newStreak,
+            lastLogDate: today
+          });
+        }
+      }
+
+      // 2. Guardar comida
+      const finalData = analysisResult || { calories: 0, protein: 0, carbohydrates: 0, fats: 0, analysisRaw: '{}' };
+      const mealLog = {
+        userId: user.uid,
+        logDateTime: new Date().toISOString(),
+        mealType: mealName,
+        totalCalories: Math.round(finalData.calories),
+        totalProteins: Math.round(finalData.protein),
+        totalCarbohydrates: Math.round(finalData.carbohydrates),
+        totalFats: Math.round(finalData.fats),
+        photoDataUri: photo,
+        analysisRaw: finalData.analysisRaw
+      };
+
+      await addDocumentNonBlocking(collection(db, 'users', user.uid, 'mealLogs'), mealLog);
+      
+      toast({
+        title: "¡Comida registrada!",
+        description: `${mealLog.totalCalories} kcal añadidas a tu diario.`,
       });
+      router.push('/dashboard');
+    } catch (err) {
+      console.error(err);
+      setError('Error al guardar el registro.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (

@@ -103,6 +103,8 @@ export default function OnboardingPage() {
         carbohydrateGoalGrams: targets.carb,
         fatGoalGrams: targets.fat,
         metaAguaMl: targets.water,
+        streak: 0,
+        lastLogDate: '',
         createdAt: new Date().toISOString()
       };
 
