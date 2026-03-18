@@ -6,6 +6,10 @@ import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { Loader2, Sparkles } from 'lucide-react';
 
+/**
+ * Pantalla de entrada inteligente.
+ * Decide el destino basándose en el estado de autenticación y la existencia del perfil.
+ */
 export default function Landing() {
   const { user, isUserLoading } = useUser();
   const db = useFirestore();
@@ -14,26 +18,21 @@ export default function Landing() {
   const profileRef = useMemoFirebase(() => user ? doc(db, 'users', user.uid) : null, [db, user]);
   const { data: profile, isLoading: isProfileLoading } = useDoc<any>(profileRef);
 
-  const [checking, setChecking] = useState(true);
-
   useEffect(() => {
-    // Si la autenticación ha terminado de cargar
     if (!isUserLoading) {
       if (!user) {
-        // No hay usuario -> Registrarse
-        router.push('/register');
-        setChecking(false);
+        // No hay sesión -> Ir a Registro (no a onboarding directo)
+        router.replace('/register');
       } else {
-        // Hay usuario, esperamos a que cargue el perfil antes de decidir
+        // Hay sesión, esperamos a que cargue el perfil antes de decidir
         if (!isProfileLoading) {
           if (!profile) {
-            // Usuario autenticado pero sin perfil en Firestore
-            router.push('/onboarding');
+            // Logueado pero sin perfil -> Configurar plan
+            router.replace('/onboarding');
           } else {
-            // Todo ok
-            router.push('/dashboard');
+            // Usuario con perfil -> Dashboard
+            router.replace('/dashboard');
           }
-          setChecking(false);
         }
       }
     }
@@ -49,7 +48,7 @@ export default function Landing() {
       </div>
       <div className="text-center space-y-2">
         <h1 className="text-4xl font-headline font-bold tracking-tighter text-foreground">NutriScan</h1>
-        <p className="text-muted-foreground font-medium animate-pulse text-sm">Validando biometría...</p>
+        <p className="text-muted-foreground font-medium animate-pulse text-sm">Sincronizando biometría...</p>
       </div>
       <Loader2 className="w-6 h-6 animate-spin text-primary opacity-50" />
     </div>

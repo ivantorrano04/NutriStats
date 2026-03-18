@@ -4,7 +4,6 @@ import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser, useFirestore, addDocumentNonBlocking, useMemoFirebase } from '@/firebase';
 import { collection, doc, updateDoc, getDoc } from 'firebase/firestore';
-import { BottomNav } from '@/components/Navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -42,8 +41,9 @@ export default function RegistrarPage() {
         img.onerror = () => reject(new Error("Error al cargar imagen"));
         img.onload = () => {
           const canvas = document.createElement('canvas');
-          const MAX_WIDTH = 1024;
-          const MAX_HEIGHT = 1024;
+          // Tamaño máximo optimizado para no crashear en móviles
+          const MAX_WIDTH = 800;
+          const MAX_HEIGHT = 800;
           let width = img.width;
           let height = img.height;
 
@@ -65,7 +65,7 @@ export default function RegistrarPage() {
           if (!ctx) return reject(new Error("Canvas context no disponible"));
           
           ctx.drawImage(img, 0, 0, width, height);
-          resolve(canvas.toDataURL('image/jpeg', 0.8));
+          resolve(canvas.toDataURL('image/jpeg', 0.6)); // Compresión agresiva para ahorro de memoria
         };
         img.src = e.target?.result as string;
       };
@@ -84,12 +84,8 @@ export default function RegistrarPage() {
         await runAnalysis(optimizedDataUri);
       } catch (err: any) {
         console.error("Error optimizando imagen:", err);
-        setError("La imagen es demasiado pesada o incompatible. Prueba con otra.");
-        toast({
-          variant: 'destructive',
-          title: 'Error de Cámara',
-          description: 'No se pudo procesar la foto seleccionada.',
-        });
+        setError("Error de memoria al procesar la foto. Prueba con otra.");
+        toast({ variant: 'destructive', title: 'Error de Cámara', description: 'La foto es demasiado grande para procesar.' });
         setAnalyzing(false);
       }
     }
@@ -99,27 +95,23 @@ export default function RegistrarPage() {
     setAnalyzing(true);
     setError(null);
     try {
-      const payload = {
-        flow: 'analyze',
-        input: {
-          photoDataUri: dataUri,
-          mealDescription: mealName
-        }
-      };
-
-      const res = await fetch(getApiUrl('/api/ai'), {
+      const url = getApiUrl('/api/ai');
+      const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          flow: 'analyze',
+          input: { photoDataUri: dataUri, mealDescription: mealName }
+        }),
       });
 
-      if (!res.ok) throw new Error('AI service error');
+      if (!res.ok) throw new Error('Error en el servicio de IA');
 
       const result: AnalyzeMealPhotoForNutrientsOutput = await res.json();
       setAnalysisResult(result);
       if (!mealName) setMealName("Nueva Comida");
     } catch (err) {
-      setError('La IA no pudo procesar la imagen automáticamente. Reintenta o ingresa datos.');
+      setError('La IA no pudo procesar la imagen. Verifica tu conexión.');
       console.error(err);
     } finally {
       setAnalyzing(false);
@@ -128,11 +120,6 @@ export default function RegistrarPage() {
 
   const saveMeal = async () => {
     if (!user || !userDocRef) return;
-    if (!mealName) {
-      setError('Dale un nombre a tu comida.');
-      return;
-    }
-
     setSaving(true);
     try {
       const profileSnap = await getDoc(userDocRef);
@@ -145,15 +132,9 @@ export default function RegistrarPage() {
         let lastLog = profile.lastLogDate || '';
 
         if (lastLog !== today) {
-          if (lastLog === yesterday) {
-            newStreak += 1;
-          } else {
-            newStreak = 1;
-          }
-          await updateDoc(userDocRef, {
-            streak: newStreak,
-            lastLogDate: today
-          });
+          if (lastLog === yesterday) newStreak += 1;
+          else newStreak = 1;
+          await updateDoc(userDocRef, { streak: newStreak, lastLogDate: today });
         }
       }
 
@@ -161,7 +142,7 @@ export default function RegistrarPage() {
       const mealLog = {
         userId: user.uid,
         logDateTime: new Date().toISOString(),
-        mealType: mealName,
+        mealType: mealName || "Nueva Comida",
         totalCalories: Math.round(finalData.calories),
         totalProteins: Math.round(finalData.protein),
         totalCarbohydrates: Math.round(finalData.carbohydrates),
@@ -171,11 +152,7 @@ export default function RegistrarPage() {
       };
 
       await addDocumentNonBlocking(collection(db, 'users', user.uid, 'mealLogs'), mealLog);
-      
-      toast({
-        title: "¡Comida registrada!",
-        description: `${mealLog.totalCalories} kcal añadidas a tu diario.`,
-      });
+      toast({ title: "¡Comida registrada!", description: "Información guardada en tu diario." });
       router.push('/dashboard');
     } catch (err) {
       console.error(err);
@@ -209,59 +186,41 @@ export default function RegistrarPage() {
               </div>
               <div className="text-center space-y-1">
                 <p className="font-bold text-foreground text-xl">Capturar Plato</p>
-                <p className="text-xs font-medium opacity-60 px-10 leading-relaxed">Saca una foto para que nuestra IA identifique tus macros automáticamente</p>
+                <p className="text-xs font-medium opacity-60 px-10 leading-relaxed">Saca una foto para identificar tus macros</p>
               </div>
             </Button>
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              onChange={handleFileChange} 
-              accept="image/*" 
-              className="hidden" 
-            />
+            <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
           </div>
         ) : (
-          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-8 duration-700 overflow-y-auto flex-1 no-scrollbar">
-            <div className="relative aspect-square rounded-[3rem] overflow-hidden glass border-white/20 shadow-2xl group">
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-8 duration-700 overflow-y-auto flex-1 no-scrollbar pb-20">
+            <div className="relative aspect-square rounded-[3rem] overflow-hidden glass border-white/20 shadow-2xl">
               <img src={photo} alt="Preview" className="w-full h-full object-cover" />
               {analyzing && (
                 <div className="absolute inset-0 bg-background/60 backdrop-blur-2xl flex flex-col items-center justify-center text-center p-10">
-                  <div className="relative mb-6">
-                    <div className="absolute inset-0 bg-primary/30 blur-3xl rounded-full animate-pulse" />
-                    <Loader2 className="w-12 h-12 animate-spin text-primary relative z-10" />
-                  </div>
+                  <Loader2 className="w-12 h-12 animate-spin text-primary mb-4" />
                   <h2 className="font-headline font-bold text-2xl text-foreground">Escaneando...</h2>
-                  <p className="text-xs font-medium text-muted-foreground mt-2 opacity-80 leading-relaxed">Identificando ingredientes y porciones</p>
                 </div>
               )}
             </div>
 
-            <div className="space-y-6 pb-12">
+            <div className="space-y-6">
               <div className="space-y-2 px-2">
                 <Label className="text-[9px] font-bold uppercase tracking-[0.3em] text-muted-foreground opacity-70">Nombre del Plato</Label>
-                <Input 
-                  placeholder="Ej. Ensalada César..." 
-                  className="glass h-14 rounded-2xl text-lg font-bold px-6 border-white/10"
-                  value={mealName}
-                  onChange={e => setMealName(e.target.value)}
-                />
+                <Input placeholder="Ej. Ensalada César..." className="glass h-14 rounded-2xl text-lg font-bold px-6 border-white/10" value={mealName} onChange={e => setMealName(e.target.value)} />
               </div>
 
               {error && (
                 <Alert variant="destructive" className="rounded-[1.8rem] glass border-destructive/30 bg-destructive/10">
                   <AlertCircle className="h-4 w-4" />
-                  <AlertTitle className="text-xs font-bold">IA con dudas</AlertTitle>
-                  <AlertDescription className="text-[10px] font-medium opacity-80 leading-snug">{error}</AlertDescription>
+                  <AlertTitle className="text-xs font-bold">Error de IA</AlertTitle>
+                  <AlertDescription className="text-[10px] font-medium opacity-80">{error}</AlertDescription>
                 </Alert>
               )}
 
               {analysisResult && (
                 <Card className="glass border-none shadow-2xl rounded-[2.5rem] overflow-hidden">
                   <CardContent className="p-6 space-y-5">
-                    <div className="flex items-center gap-3 text-primary">
-                      <Sparkles className="w-4 h-4" />
-                      <span className="text-[9px] font-bold uppercase tracking-[0.3em] opacity-80">Estimación Nutricional</span>
-                    </div>
+                    <div className="flex items-center gap-3 text-primary"><Sparkles className="w-4 h-4" /><span className="text-[9px] font-bold uppercase tracking-[0.3em] opacity-80">Estimación IA</span></div>
                     <div className="grid grid-cols-2 gap-3">
                       <NutrientBadge label="Calorías" value={Math.round(analysisResult.calories)} unit="kcal" color="text-primary" />
                       <NutrientBadge label="Proteínas" value={Math.round(analysisResult.protein)} unit="g" color="text-accent" />
@@ -272,22 +231,10 @@ export default function RegistrarPage() {
                 </Card>
               )}
 
-              <div className="flex gap-4 pt-2 px-1">
-                <Button 
-                  variant="outline" 
-                  className="flex-1 gap-2 h-14 rounded-2xl glass border-white/10 hover:bg-white/5 ios-btn font-bold"
-                  onClick={() => { setPhoto(null); setAnalysisResult(null); setMealName(''); }}
-                  disabled={saving}
-                >
-                  <RefreshCw className="w-4 h-4" /> Reset
-                </Button>
-                <Button 
-                  className="flex-[2] bg-primary hover:bg-primary/90 text-white font-bold h-14 rounded-2xl shadow-2xl shadow-primary/30 ios-btn text-base"
-                  onClick={saveMeal}
-                  disabled={analyzing || saving || !photo}
-                >
-                  {saving ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <CheckCircle className="w-5 h-5 mr-2" />}
-                  Confirmar
+              <div className="flex gap-4 pt-2">
+                <Button variant="outline" className="flex-1 h-14 rounded-2xl glass ios-btn font-bold" onClick={() => { setPhoto(null); setAnalysisResult(null); setMealName(''); }} disabled={saving}><RefreshCw className="w-4 h-4" /></Button>
+                <Button className="flex-[2] bg-primary text-white font-bold h-14 rounded-2xl shadow-xl ios-btn" onClick={saveMeal} disabled={analyzing || saving || !photo}>
+                  {saving ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <CheckCircle className="w-5 h-5 mr-2" />} Confirmar
                 </Button>
               </div>
             </div>
